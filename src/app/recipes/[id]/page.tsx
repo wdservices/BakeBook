@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -12,6 +13,8 @@ import Spinner from '@/components/ui/Spinner';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+
 
 export default function RecipePage({ params }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -69,7 +72,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   }
 
   if (!recipe) {
-    return <div className="text-center py-10 text-xl text-destructive">Recipe not found.</div>;
+    return <div className="text-center py-10 text-xl text-destructive">Baking recipe not found.</div>;
   }
 
   const canEdit = user && (user.id === recipe.authorId || user.role === 'admin');
@@ -84,7 +87,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
               alt={recipe.title}
               layout="fill"
               objectFit="cover"
-              data-ai-hint="food recipe"
+              data-ai-hint="baking recipe"
             />
           </div>
         )}
@@ -92,7 +95,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <CardTitle className="text-4xl font-headline text-primary mb-2 md:mb-0">{recipe.title}</CardTitle>
             {canEdit && (
-              <Link href={`/recipes/${recipe.id}/edit`} passHref legacyBehavior>
+              <Link href={`/recipes/${recipe.id}/edit`} passHref>
                 <Button variant="outline"><Edit3 className="mr-2 h-4 w-4" /> Edit Recipe</Button>
               </Link>
             )}
@@ -100,7 +103,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
           <CardDescription className="text-lg text-muted-foreground">{recipe.description}</CardDescription>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground pt-3">
             <div className="flex items-center gap-1"><Clock size={16} /> Prep: {recipe.prepTime}</div>
-            <div className="flex items-center gap-1"><Clock size={16} /> Cook: {recipe.cookTime}</div>
+            <div className="flex items-center gap-1"><Clock size={16} /> Bake: {recipe.cookTime}</div>
             <div className="flex items-center gap-1"><Users size={16} /> Servings: {recipe.servings}</div>
             <div className="flex items-center gap-1"><ChefHat size={16} /> By: User {recipe.authorId.slice(-4)}</div>
           </div>
@@ -129,7 +132,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
             <h2 className="text-2xl font-headline text-accent mb-2">Instructions</h2>
             {recipe.steps.length > 0 && (
               <div className="mb-4">
-                <Label htmlFor="stepsProgress" className="text-sm text-muted-foreground">Cooking Progress</Label>
+                <Label htmlFor="stepsProgress" className="text-sm text-muted-foreground">Baking Progress</Label>
                 <Progress value={stepsProgress} id="stepsProgress" className="w-full h-3 mt-1" />
                 <p className="text-xs text-right mt-1 text-muted-foreground">{Math.round(stepsProgress)}% complete</p>
               </div>
@@ -153,3 +156,4 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+

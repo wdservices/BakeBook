@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -6,8 +7,8 @@ import Footer from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Bakebook - Your Culinary Companion',
-  description: 'Discover, create, and share delicious recipes.',
+  title: 'Bakebook - Your Baking Companion',
+  description: 'Discover, create, sell, and share amazing baking recipes. Follow your favorite bakers and exchange baking tips.',
 };
 
 export default function RootLayout({
@@ -36,3 +37,4 @@ export default function RootLayout({
     </html>
   );
 }
+

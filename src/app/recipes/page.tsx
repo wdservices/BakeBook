@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -44,10 +45,10 @@ export default function RecipesPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-4xl font-headline text-primary">Discover Recipes</h1>
-        <Link href="/recipes/new" passHref legacyBehavior>
+        <h1 className="text-4xl font-headline text-primary">Discover Baking Recipes</h1>
+        <Link href="/recipes/new" passHref>
           <Button>
-            <PlusCircle className="mr-2 h-5 w-5" /> Create New Recipe
+            <PlusCircle className="mr-2 h-5 w-5" /> Create New Baking Recipe
           </Button>
         </Link>
       </div>
@@ -58,3 +59,4 @@ export default function RecipesPage() {
     </div>
   );
 }
+

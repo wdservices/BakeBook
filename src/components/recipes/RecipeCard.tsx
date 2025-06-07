@@ -1,3 +1,4 @@
+
 import type { Recipe } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,7 +22,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
               layout="fill"
               objectFit="cover"
               className="transition-transform duration-300 group-hover:scale-105"
-              data-ai-hint="food cooking"
+              data-ai-hint="baked goods"
             />
           </div>
         </CardHeader>
@@ -31,7 +32,11 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
           <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
             <div className="flex items-center gap-1">
               <Clock size={16} />
-              <span>{recipe.prepTime} / {recipe.cookTime}</span>
+              <span>Prep: {recipe.prepTime}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock size={16} />
+              <span>Bake: {recipe.cookTime}</span>
             </div>
             <div className="flex items-center gap-1">
               <Users size={16} />
@@ -52,3 +57,4 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
 };
 
 export default RecipeCard;
+

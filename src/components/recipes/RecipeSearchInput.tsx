@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ const RecipeSearchInput = ({ searchTerm, onSearchChange }: RecipeSearchInputProp
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
       <Input
         type="search"
-        placeholder="Search recipes (e.g., cake, chicken, pasta...)"
+        placeholder="Search baking recipes (e.g., cake, bread, cookies...)"
         value={searchTerm}
         onChange={handleChange}
         className="pl-10 py-3 text-base rounded-lg shadow-sm"
@@ -29,3 +30,4 @@ const RecipeSearchInput = ({ searchTerm, onSearchChange }: RecipeSearchInputProp
 };
 
 export default RecipeSearchInput;
+

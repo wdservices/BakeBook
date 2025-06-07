@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -61,7 +62,7 @@ const AuthForm = ({ mode }: AuthFormProps) => {
             {mode === 'login' ? 'Welcome Back!' : 'Create Your Account'}
           </CardTitle>
           <CardDescription className="text-center">
-            {mode === 'login' ? 'Sign in to continue to Bakebook.' : 'Join Bakebook to discover and share recipes.'}
+            {mode === 'login' ? 'Sign in to continue to Bakebook.' : 'Join Bakebook to discover, share, and sell baking recipes.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,3 +152,4 @@ const AuthForm = ({ mode }: AuthFormProps) => {
 };
 
 export default AuthForm;
+

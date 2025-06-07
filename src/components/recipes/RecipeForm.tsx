@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -97,7 +98,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           steps: data.steps.map((step, idx) => ({ ...step, id: `step-${Date.now()}-${idx}` })),
         };
         const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
-        toast({ title: "Recipe Created!", description: `"${createdRecipe.title}" has been successfully added.` });
+        toast({ title: "Baking Recipe Created!", description: `"${createdRecipe.title}" has been successfully added.` });
         router.push(`/recipes/${createdRecipe.id}`);
       } else if (mode === 'edit' && initialData) {
         const updatedRecipeData = {
@@ -107,10 +108,10 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
         }
         const updated = updateRecipeData(initialData.id, updatedRecipeData);
         if (updated) {
-          toast({ title: "Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
+          toast({ title: "Baking Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
           router.push(`/recipes/${updated.id}`);
         } else {
-           toast({ title: "Update Failed", description: "Could not update the recipe.", variant: "destructive" });
+           toast({ title: "Update Failed", description: "Could not update the baking recipe.", variant: "destructive" });
         }
       }
     } catch (error) {
@@ -125,10 +126,10 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
     <Card className="w-full max-w-3xl mx-auto shadow-xl animate-scale-in">
       <CardHeader>
         <CardTitle className="text-3xl text-primary font-headline">
-          {mode === 'create' ? 'Create a New Recipe' : 'Edit Recipe'}
+          {mode === 'create' ? 'Add Your Baking Recipe' : 'Edit Your Baking Recipe'}
         </CardTitle>
         <CardDescription>
-          {mode === 'create' ? 'Share your culinary masterpiece with the world!' : 'Make changes to your delicious recipe.'}
+          {mode === 'create' ? 'Share your baking masterpiece with the world!' : 'Make changes to your delicious baking recipe.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -141,7 +142,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...register('description')} placeholder="A short summary of your recipe..." />
+            <Textarea id="description" {...register('description')} placeholder="A short summary of your baking recipe..." />
             {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
           </div>
 
@@ -158,7 +159,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
               {errors.prepTime && <p className="text-sm text-destructive">{errors.prepTime.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cookTime">Cook Time</Label>
+              <Label htmlFor="cookTime">Bake Time</Label>
               <Input id="cookTime" {...register('cookTime')} placeholder="e.g., 1 hour" />
               {errors.cookTime && <p className="text-sm text-destructive">{errors.cookTime.message}</p>}
             </div>
@@ -174,7 +175,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 
           <CardFooter className="p-0 pt-6">
             <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-              {isSubmitting ? <><Spinner size={18} className="mr-2"/> Processing...</> : (mode === 'create' ? 'Create Recipe' : 'Save Changes')}
+              {isSubmitting ? <><Spinner size={18} className="mr-2"/> Processing...</> : (mode === 'create' ? 'Add Baking Recipe' : 'Save Changes')}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()} className="ml-4">
               Cancel
@@ -187,3 +188,4 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 };
 
 export default RecipeForm;
+
