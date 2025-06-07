@@ -40,6 +40,9 @@ body {
 
     --ring: 17 100% 74%; /* Primary color for rings */
 
+    --blue: 210 75% 65%; /* New blue color */
+    --blue-foreground: 210 75% 15%; /* Dark color for text on blue */
+
     --radius: 0.5rem;
 
     /* Sidebar specific colors - adjust as needed if sidebar is used extensively */
@@ -80,6 +83,9 @@ body {
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
     --ring: 17 100% 74%;
+
+    --blue: 210 75% 65%; /* New blue color */
+    --blue-foreground: 210 75% 15%; /* Dark color for text on blue */
 
     --sidebar-background: 30 10% 12%;
     --sidebar-foreground: 30 15% 75%;
