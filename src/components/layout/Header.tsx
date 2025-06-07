@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -32,7 +33,7 @@ const Header = () => {
           <span>Bakebook</span>
         </Link>
         <nav className="flex items-center gap-4">
-          <Link href="/recipes" legacyBehavior passHref>
+          <Link href="/recipes">
             <Button variant="ghost">Recipes</Button>
           </Link>
           {loading ? (
@@ -50,14 +51,14 @@ const Header = () => {
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {isAdmin && (
-                    <Link href="/admin/dashboard" passHref legacyBehavior>
+                    <Link href="/admin/dashboard">
                       <DropdownMenuItem>
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Admin Dashboard
                       </DropdownMenuItem>
                     </Link>
                   )}
-                  <Link href="/recipes/new" passHref legacyBehavior>
+                  <Link href="/recipes/new">
                     <DropdownMenuItem>
                        <UserCircle className="mr-2 h-4 w-4" /> {/* Placeholder for a "My Recipes" or similar icon */}
                         Create Recipe
@@ -73,12 +74,12 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link href="/login" legacyBehavior passHref>
+              <Link href="/login">
                 <Button variant="ghost">
                   <LogIn className="mr-2 h-4 w-4" /> Login
                 </Button>
               </Link>
-              <Link href="/signup" legacyBehavior passHref>
+              <Link href="/signup">
                 <Button>
                   <UserPlus className="mr-2 h-4 w-4" /> Sign Up
                 </Button>
