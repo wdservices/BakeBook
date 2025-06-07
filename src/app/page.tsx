@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ export default function HomePage() {
         </div>
         
         <h1 className="text-6xl md:text-7xl font-headline font-bold tracking-tight text-foreground animate-scale-in" style={{ animationDelay: '0.4s' }}>
-          Welcome to <span className="text-primary">Bakebook</span>
+          Welcome to <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent">Bakebook</span>
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.6s' }}>
@@ -35,12 +36,12 @@ export default function HomePage() {
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-          <Link href="/recipes" passHref legacyBehavior>
+          <Link href="/recipes">
             <Button size="lg" className="text-lg px-8 py-6">
               <Search className="mr-2 h-5 w-5" /> Explore Recipes
             </Button>
           </Link>
-          <Link href="/recipes/new" passHref legacyBehavior>
+          <Link href="/recipes/new">
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary text-primary hover:bg-primary/10">
               <PlusCircle className="mr-2 h-5 w-5" /> Add Your Recipe
             </Button>

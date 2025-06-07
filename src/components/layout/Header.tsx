@@ -28,9 +28,9 @@ const Header = () => {
   return (
     <header className="bg-card/80 backdrop-blur-md shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2 text-2xl font-headline text-primary hover:text-primary/80 transition-colors">
-          <ChefHat size={32} />
-          <span>Bakebook</span>
+        <Link href="/" className="flex items-center gap-2 text-2xl font-headline group transition-colors">
+          <ChefHat size={32} className="text-primary group-hover:text-[hsl(var(--blue))] transition-colors" />
+          <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent group-hover:from-[hsl(var(--blue))] group-hover:to-primary transition-all">Bakebook</span>
         </Link>
         <nav className="flex items-center gap-4">
           <Link href="/recipes">
