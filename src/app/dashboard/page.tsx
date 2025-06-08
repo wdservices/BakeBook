@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -7,7 +8,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
-import { PlusCircle, User, Building, ChefHat, BarChart3, Edit3, Trash2 } from 'lucide-react';
+import { PlusCircle, User, Building, ChefHat, BarChart3, Edit3, Trash2, Users } from 'lucide-react';
 import RecipeGrid from '@/components/recipes/RecipeGrid';
 import type { Recipe } from '@/types';
 import { mockRecipes, deleteRecipe as deleteRecipeData } from '@/data/mockRecipes'; // Assuming mockRecipes is your source
