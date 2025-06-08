@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
 import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { Recipe } from '@/types';
@@ -136,7 +136,7 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {user.name || user.email?.split('@')[0]}!</h1>
+          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {user.brandName || user.name || user.email?.split('@')[0]}!</h1>
           {user.brandName && <p className="text-lg text-muted-foreground">Your Bakery: <span className="font-semibold text-accent">{user.brandName}</span></p>}
         </div>
         <Link href="/recipes/new" passHref>
@@ -278,4 +278,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -24,11 +24,26 @@ const Header = () => {
 
   const UserAvatar = () => {
     if (!user) return <UserCircle />;
-    const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() :
-                     user.email ? user.email.substring(0,2).toUpperCase() : 'U';
+
+    let avatarSrc: string | undefined = user.photoURL || undefined;
+    const avatarAlt = user.name || user.email || 'User';
+    const initials = user.name
+      ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+      : user.email
+      ? user.email.substring(0, 2).toUpperCase()
+      : 'U';
+
+    if (!avatarSrc) {
+      // Generate avatar from ui-avatars.com if no photoURL
+      const nameForAvatar = user.name || user.email;
+      if (nameForAvatar) {
+        avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=random&color=fff&size=64`;
+      }
+    }
+
     return (
       <Avatar className="h-8 w-8">
-        <AvatarImage src={user.photoURL || undefined} alt={user.name || user.email || 'User'} />
+        <AvatarImage src={avatarSrc} alt={avatarAlt} />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
     );
@@ -98,16 +113,12 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 p-1 rounded-full">
                       <UserAvatar />
-                      <span className="hidden md:inline text-sm">{user.name || user.email}</span>
+                      <span className="hidden md:inline text-sm">{user.brandName || user.name || user.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/admin/dashboard')}>
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Admin (Temp)
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                          <LayoutDashboard className="mr-2 h-4 w-4" />
                           My Dashboard
