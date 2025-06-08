@@ -192,7 +192,7 @@ export default function DashboardPage() {
             </Link>
           </Card>
         ) : displayedRecipesCount > 0 ? ( 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block">
@@ -272,4 +272,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
