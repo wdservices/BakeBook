@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Users2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,8 +20,8 @@ const Header = () => {
 
   const UserAvatar = () => (
     <Avatar>
-      <AvatarImage src={user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random` : undefined} alt={user?.name || 'User'} />
-      <AvatarFallback>{user?.name ? user.name.substring(0, 2).toUpperCase() : <UserCircle />}</AvatarFallback>
+      <AvatarImage src={(user?.brandName || user?.name) ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.brandName || user.name)}&background=random&color=fff` : undefined} alt={user?.brandName || user?.name || 'User'} />
+      <AvatarFallback>{user?.brandName ? user.brandName.substring(0, 2).toUpperCase() : user?.name ? user.name.substring(0, 2).toUpperCase() : <UserCircle />}</AvatarFallback>
     </Avatar>
   );
 
@@ -32,9 +32,12 @@ const Header = () => {
           <ChefHat size={32} className="text-primary group-hover:text-[hsl(var(--blue))] transition-colors" />
           <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent group-hover:from-[hsl(var(--blue))] group-hover:to-primary transition-all">Bakebook</span>
         </Link>
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-2 md:gap-4">
           <Link href="/recipes">
             <Button variant="ghost">Recipes</Button>
+          </Link>
+          <Link href="/bakers">
+            <Button variant="ghost">Bakers</Button>
           </Link>
           {loading ? (
             <Button variant="ghost" disabled>Loading...</Button>
@@ -44,7 +47,7 @@ const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <UserAvatar />
-                    <span className="hidden md:inline">{user?.name || user?.email}</span>
+                    <span className="hidden md:inline">{user?.brandName || user?.name || user?.email}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
