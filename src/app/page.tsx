@@ -2,9 +2,88 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChefHat, Search, PlusCircle, BookOpen, PackageCheck, Smile } from 'lucide-react';
+import { ChefHat, Search, PlusCircle, BookOpen, PackageCheck, Smile, LibraryBig, ClipboardList, ReceiptText, Users2, Sparkles, MonitorSmartphone, UserPlus, Edit3, FileText, BarChartBig } from 'lucide-react';
 
 export default function HomePage() {
+  const features = [
+    {
+      icon: LibraryBig,
+      title: "Digital Recipe Storage",
+      description: "Store all your recipes in one place, organized and easily accessible.",
+      dataAiHint: "digital recipe book"
+    },
+    {
+      icon: ClipboardList,
+      title: "Ingredient Tracking",
+      description: "Check off ingredients as you use them to stay organized during baking.",
+      dataAiHint: "baking checklist"
+    },
+    {
+      icon: ReceiptText,
+      title: "Receipt Generation",
+      description: "Create and export receipts in PDF format for your baking business.",
+      dataAiHint: "business invoice"
+    },
+    {
+      icon: Users2,
+      title: "User-Friendly Interface",
+      description: "Simple and intuitive design for bakers of all skill levels.",
+      dataAiHint: "easy interface"
+    },
+    {
+      icon: Sparkles,
+      title: "AI Recommendations",
+      description: "Get smart suggestions for baking times and temperatures.",
+      dataAiHint: "ai cooking"
+    },
+    {
+      icon: MonitorSmartphone,
+      title: "Cross-Device Access",
+      description: "Access your recipes from any device, anytime, anywhere.",
+      dataAiHint: "multi device"
+    }
+  ];
+
+  const howItWorksSteps = [
+    {
+      number: 1,
+      icon: UserPlus,
+      title: "Sign Up",
+      description: "Create your account in seconds with just a few clicks."
+    },
+    {
+      number: 2,
+      icon: Edit3,
+      title: "Add Recipes",
+      description: "Input your recipes with ingredients, measurements, and baking instructions."
+    },
+    {
+      number: 3,
+      icon: FileText,
+      title: "Bake with Ease",
+      description: "Use the app to track your progress and generate receipts."
+    },
+    {
+      number: 4,
+      icon: BarChartBig, // Using BarChartBig as a proxy for "Enjoy Baking" with stats/progress
+      title: "Enjoy Baking",
+      description: "Access your recipes anytime, anywhere from any device."
+    }
+  ];
+
+  const testimonials = [
+    {
+      quote: "BakeBook has completely transformed how I manage my recipes. It's so easy to use!",
+      author: "Sarah, Home Baker",
+      dataAiHint: "positive review"
+    },
+    {
+      quote: "The receipt feature is a game-changer for my bakery business.",
+      author: "John, Professional Baker",
+      dataAiHint: "business testimonial"
+    }
+  ];
+
   return (
     <div className="relative min-h-[calc(100vh-var(--header-height,10vh)-var(--footer-height,10vh))] flex flex-col items-center justify-center text-center p-4 overflow-hidden -mt-8 -mb-8">
       {/* Background Image */}
@@ -19,10 +98,10 @@ export default function HomePage() {
       />
       
       {/* Overlay to ensure text readability */}
-      <div className="absolute inset-0 bg-background/70 z-10"></div>
+      <div className="absolute inset-0 bg-background/80 z-10"></div>
 
       {/* Content */}
-      <div className="relative z-20 animate-fade-in space-y-8">
+      <div className="relative z-20 animate-fade-in space-y-12 py-12"> {/* Increased space-y and added py-12 */}
         <div className="flex justify-center">
           <ChefHat size={128} className="text-primary animate-scale-in" style={{ animationDelay: '0.2s' }} />
         </div>
@@ -38,12 +117,12 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
           <Link href="/recipes">
             <Button size="lg" className="text-lg px-8 py-6">
-              <Search className="mr-2 h-5 w-5" /> Explore Your Recipes
+              <Search className="mr-2 h-5 w-5" /> Explore Your Baking Recipes
             </Button>
           </Link>
           <Link href="/recipes/new">
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary text-primary hover:bg-primary/10">
-              <PlusCircle className="mr-2 h-5 w-5" /> Add New Recipe
+              <PlusCircle className="mr-2 h-5 w-5" /> Add New Baking Recipe
             </Button>
           </Link>
         </div>
@@ -65,7 +144,78 @@ export default function HomePage() {
             <p className="text-muted-foreground">Focus on the joy of baking, not the hassle. BakeBook makes your baking journey smoother and more enjoyable.</p>
           </div>
         </div>
+
+        {/* Why Choose BakeBook Section */}
+        <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.2s' }}>
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-12">
+              Why Choose BakeBook?
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {features.map((feature, index) => (
+                <div 
+                  key={index} 
+                  className="p-6 bg-card rounded-xl shadow-xl flex flex-col items-center text-center transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                  data-ai-hint={feature.dataAiHint}
+                >
+                  <div className="flex items-center justify-center w-16 h-16 bg-[hsl(var(--blue))]/20 rounded-full mb-5">
+                    <feature.icon size={32} className="text-[hsl(var(--blue))]" />
+                  </div>
+                  <h3 className="text-2xl font-headline text-card-foreground mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How BakeBook Works Section */}
+        <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.4s' }}>
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-16">
+              How BakeBook Works
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 max-w-6xl mx-auto">
+              {howItWorksSteps.map((step, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="flex items-center justify-center w-16 h-16 bg-[hsl(var(--blue))] rounded-full mb-6 text-blue-foreground text-2xl font-bold shadow-lg">
+                    {step.number}
+                  </div>
+                  <h3 className="text-2xl font-headline text-card-foreground mb-3">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed px-2">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* What Our Users Say Section */}
+        <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.6s' }}>
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-12">
+              What Our Users Say
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {testimonials.map((testimonial, index) => (
+                <div 
+                  key={index} 
+                  className="p-8 bg-card rounded-xl shadow-xl flex flex-col text-left transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                  data-ai-hint={testimonial.dataAiHint}
+                >
+                  <p className="text-lg text-card-foreground mb-6 leading-relaxed italic">&quot;{testimonial.quote}&quot;</p>
+                  <p className="text-muted-foreground text-sm font-medium self-end">&mdash; {testimonial.author}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   );
 }
+
+    
