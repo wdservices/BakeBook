@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 
 
-export default function RecipePage({ params }: { params: { id: string } }) {
+export default function RecipePage({ params: { id } }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
@@ -27,21 +27,21 @@ export default function RecipePage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     setLoading(true);
-    const fetchedRecipe = getRecipeById(params.id);
+    const fetchedRecipe = getRecipeById(id);
     if (fetchedRecipe) {
       setRecipe(fetchedRecipe);
       // Initialize tracking states from localStorage if available, or default to false
-      const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${params.id}`);
+      const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${id}`);
       if (storedCheckedIngredients) setCheckedIngredients(JSON.parse(storedCheckedIngredients));
       else setCheckedIngredients(fetchedRecipe.ingredients.reduce((acc, ing) => ({...acc, [ing.id]: false}), {}));
       
-      const storedCompletedSteps = localStorage.getItem(`completedSteps_${params.id}`);
+      const storedCompletedSteps = localStorage.getItem(`completedSteps_${id}`);
       if (storedCompletedSteps) setCompletedSteps(JSON.parse(storedCompletedSteps));
       else setCompletedSteps(fetchedRecipe.steps.reduce((acc, step) => ({...acc, [step.id]: false}), {}));
 
     }
     setLoading(false);
-  }, [params.id]);
+  }, [id]);
 
   const handleIngredientToggle = (ingredientId: string) => {
     const newCheckedState = {
@@ -49,7 +49,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       [ingredientId]: !checkedIngredients[ingredientId],
     };
     setCheckedIngredients(newCheckedState);
-    localStorage.setItem(`checkedIngredients_${params.id}`, JSON.stringify(newCheckedState));
+    localStorage.setItem(`checkedIngredients_${id}`, JSON.stringify(newCheckedState));
   };
 
   const handleStepToggle = (stepId: string) => {
@@ -58,7 +58,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       [stepId]: !completedSteps[stepId],
     };
     setCompletedSteps(newCompletedState);
-    localStorage.setItem(`completedSteps_${params.id}`, JSON.stringify(newCompletedState));
+    localStorage.setItem(`completedSteps_${id}`, JSON.stringify(newCompletedState));
   };
 
   const stepsProgress = useMemo(() => {
@@ -77,7 +77,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     return <div className="text-center py-10 text-xl text-destructive">Baking recipe not found.</div>;
   }
 
-  const canEdit = user && (user.id === recipe.authorId || user.role === 'admin');
+  const canEdit = user && recipe && (user.id === recipe.authorId || user.role === 'admin');
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
