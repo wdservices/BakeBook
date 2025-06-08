@@ -5,8 +5,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
 import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { Recipe } from '@/types';
@@ -218,47 +218,50 @@ export default function DashboardPage() {
                     <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-[2.25rem]">{recipe.description}</CardDescription>
                   </CardHeader>
                 </Link>
-                <CardContent className="p-3 pt-1">
-                    <div className="flex items-center space-x-2">
-                        <Switch
-                            id={`publish-switch-${recipe.id}`}
-                            checked={recipe.isPublic}
-                            onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false)}
-                            aria-label={`Toggle ${recipe.title} visibility`}
-                        />
-                        <Label htmlFor={`publish-switch-${recipe.id}`} className="text-xs text-muted-foreground cursor-pointer">
-                            {recipe.isPublic ? "Published" : "Private"}
-                        </Label>
-                    </div>
-                </CardContent>
-                <CardFooter className="p-3 mt-auto flex gap-2">
-                  <Link href={`/recipes/${recipe.id}/edit`} className="flex-1" legacyBehavior passHref>
-                    <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10 group-hover:border-primary group-hover:text-primary transition-colors">
-                      <Edit3 size={16} className="mr-1" /> Edit
+                <CardFooter className="p-3 mt-auto flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                      <Switch
+                          id={`publish-switch-${recipe.id}`}
+                          checked={recipe.isPublic}
+                          onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false)}
+                          aria-label={`Toggle ${recipe.title} visibility`}
+                      />
+                      <Label htmlFor={`publish-switch-${recipe.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                          {recipe.isPublic ? "Published" : "Private"}
+                      </Label>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors" title="Edit Recipe">
+                      <Link href={`/recipes/${recipe.id}/edit`}>
+                        <Edit3 size={16} />
+                      </Link>
                     </Button>
-                  </Link>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="w-auto group-hover:bg-destructive/90 transition-colors">
-                        <Trash2 size={16} />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your recipe
-                          "{recipe.title}".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteRecipe(recipe.id, recipe.title)}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive-foreground focus:bg-destructive/20 transition-colors" title="Delete Recipe">
+                          <Trash2 size={16} />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your recipe
+                            "{recipe.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteRecipe(recipe.id, recipe.title)}
+                            className={buttonVariants({ variant: "destructive" })}
+                          >
+                            Yes, delete recipe
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
@@ -275,3 +278,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
