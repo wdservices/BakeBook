@@ -98,19 +98,19 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
       if (mode === 'create') {
         const newRecipeData = {
           ...data,
-          authorId: user.id, // Use Firebase UID
-          authorName: user.name || user.email, // Store author's display name
+          authorId: user.id, 
+          authorName: user.name || user.email, 
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: `ing-${Date.now()}-${idx}` })),
           steps: data.steps.map((step, idx) => ({ ...step, id: `step-${Date.now()}-${idx}` })),
           isPublic: data.isPublic ?? false,
         };
         const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
-        toast({ title: "Baking Recipe Created!", description: `"${createdRecipe.title}" has been successfully added.` });
+        toast({ title: "Recipe Saved!", description: `"${createdRecipe.title}" has been successfully saved.` });
         router.push('/dashboard'); 
       } else if (mode === 'edit' && initialData) {
         const updatedRecipeData = {
           ...data,
-          authorId: user.id, // Ensure authorId is current user, though typically this shouldn't change on edit by owner
+          authorId: user.id, 
           authorName: user.name || user.email,
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: initialData.ingredients[idx]?.id || `ing-${Date.now()}-${idx}`})),
           steps: data.steps.map((step, idx) => ({ ...step, id: initialData.steps[idx]?.id || `step-${Date.now()}-${idx}`})),
@@ -118,7 +118,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
         }
         const updated = updateRecipeData(initialData.id, updatedRecipeData);
         if (updated) {
-          toast({ title: "Baking Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
+          toast({ title: "Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
           router.push('/dashboard');
         } else {
            toast({ title: "Update Failed", description: "Could not update the baking recipe.", variant: "destructive" });
@@ -212,7 +212,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 
           <CardFooter className="p-0 pt-6">
             <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-              {isSubmitting ? <><Spinner size={18} className="mr-2"/> Processing...</> : (mode === 'create' ? 'Add Baking Recipe' : 'Save Changes')}
+              {isSubmitting ? <><Spinner size={18} className="mr-2"/> Processing...</> : (mode === 'create' ? 'Save Recipe' : 'Save Changes')}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()} className="ml-4">
               Cancel

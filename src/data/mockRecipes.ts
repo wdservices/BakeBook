@@ -30,7 +30,7 @@ export const mockRecipes: Recipe[] = [
       { id: 's1-5', description: 'Bake for 30-35 minutes, or until a wooden skewer inserted into the center comes out clean.' },
       { id: 's1-6', description: 'Let cool in pan for 10 minutes before inverting onto a wire rack to cool completely.' },
     ],
-    authorId: 'user1',
+    authorId: 'user1', // Example: Corresponds to a mock user ID
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
     isPublic: true,
@@ -62,7 +62,7 @@ export const mockRecipes: Recipe[] = [
       { id: 's2-9', description: 'Remove lid and bake for another 15-20 minutes, or until deeply golden brown and internal temperature reaches 205-210°F (96-99°C).' },
       { id: 's2-10', description: 'Let cool on a wire rack for at least 1 hour before slicing.' },
     ],
-    authorId: 'admin1',
+    authorId: 'admin1', // Example: Corresponds to a mock admin ID
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     isPublic: true,
@@ -112,7 +112,7 @@ export const getRecipeById = (id: string): Recipe | undefined => {
 export const addRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Recipe => {
   const newRecipe: Recipe = {
     ...recipe,
-    id: (mockRecipes.length + 1).toString(),
+    id: `recipe-${Date.now()}-${mockRecipes.length}`, // More unique ID for mock data
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     isPublic: recipe.isPublic === undefined ? false : recipe.isPublic, // Default to private if not specified
