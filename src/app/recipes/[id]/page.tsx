@@ -3,14 +3,15 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getRecipeById } from '@/data/mockRecipes';
 import type { Recipe, Ingredient, RecipeStep } from '@/types';
-import { Clock, Users, ChefHat, Edit3, ListChecks, CheckSquare, Square } from 'lucide-react';
+import { Clock, Users, ChefHat, Edit3, ListChecks, CheckSquare, Square, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Spinner from '@/components/ui/Spinner';
-import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     setLoading(true);
@@ -92,6 +94,11 @@ export default function RecipePage({ params }: { params: { id: string } }) {
           </div>
         )}
         <CardHeader className="pt-6">
+          <div className="mb-4">
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+            </Button>
+          </div>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <CardTitle className="text-4xl font-headline text-primary mb-2 md:mb-0">{recipe.title}</CardTitle>
             {canEdit && (
@@ -156,4 +163,3 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-
