@@ -42,11 +42,11 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
         </CardContent>
       </Link>
       <CardFooter className="p-4">
-        <Link href={`/recipes/${recipe.id}`} className="w-full" legacyBehavior passHref>
-          <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+        <Button asChild variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          <Link href={`/recipes/${recipe.id}`}>
             <Eye size={18} className="mr-2" /> View Recipe
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </CardFooter>
     </Card>
   );
