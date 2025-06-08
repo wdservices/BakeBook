@@ -133,7 +133,7 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-headline text-primary">Welcome, {user.brandName || user.name || user.email?.split('@')[0]}!</h1>
+          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {user.brandName || user.name || user.email?.split('@')[0]}!</h1>
           {user.brandName && <p className="text-lg text-muted-foreground">Your Bakery: <span className="font-semibold text-accent">{user.brandName}</span></p>}
         </div>
         <Link href="/recipes/new" passHref>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
       
       <div>
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-3xl font-headline text-primary">Your Baking Recipes</h2>
+          <h2 className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Your Baking Recipes</h2>
           {userRecipes.length > 0 && (
             <div className="relative w-full md:w-auto md:max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

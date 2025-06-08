@@ -47,7 +47,7 @@ export default function RecipesPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-4xl font-headline text-primary">Explore Public Baking Recipes</h1>
+        <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Explore Public Baking Recipes</h1>
         {/* "Create New Recipe" button removed from here, now on user dashboard */}
       </div>
       

@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChefHat, Search, PlusCircle, BookOpen, PackageCheck, Smile, LibraryBig, ClipboardList, ReceiptText, Users2, Sparkles, MonitorSmartphone, UserPlus, Edit3, FileText, BarChartBig } from 'lucide-react';
+import { ChefHat, Search, PlusCircle, BookOpen, Smile, LibraryBig, ClipboardList, ReceiptText, Users2, Sparkles, MonitorSmartphone, UserPlus, Edit3, FileText } from 'lucide-react';
 
 export default function HomePage() {
   const features = [
@@ -88,7 +88,7 @@ export default function HomePage() {
     <div className="relative min-h-[calc(100vh-var(--header-height,10vh)-var(--footer-height,10vh))] flex flex-col items-center justify-center text-center p-4 overflow-hidden -mt-8 -mb-8">
       {/* Background Image */}
       <Image
-        src="https://placehold.co/1920x1080.png?text=Artisan+Bread"
+        src="https://placehold.co/1920x1080.png"
         alt="Artisan Bread Background"
         fill={true}
         quality={80}
@@ -107,7 +107,7 @@ export default function HomePage() {
         </div>
         
         <h1 className="text-6xl md:text-7xl font-headline font-bold tracking-tight text-foreground animate-scale-in" style={{ animationDelay: '0.4s' }}>
-          Welcome to <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent">Bakebook</span>
+          Welcome to <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Bakebook</span>
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.6s' }}>
@@ -148,7 +148,7 @@ export default function HomePage() {
         {/* Why Choose BakeBook Section */}
         <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.2s' }}>
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-12">
+            <h2 className="text-4xl md:text-5xl font-headline text-center mb-12 bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">
               Why Choose BakeBook?
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -172,7 +172,7 @@ export default function HomePage() {
         {/* How BakeBook Works Section */}
         <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.4s' }}>
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-16">
+            <h2 className="text-4xl md:text-5xl font-headline text-center mb-16 bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">
               How BakeBook Works
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 max-w-6xl mx-auto">
@@ -195,7 +195,7 @@ export default function HomePage() {
         {/* What Our Users Say Section */}
         <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.6s' }}>
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-12">
+            <h2 className="text-4xl md:text-5xl font-headline text-center mb-12 bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">
               What Our Bakers Say
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">

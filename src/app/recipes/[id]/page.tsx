@@ -17,7 +17,8 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 
 
-export default function RecipePage({ params: { id } }: { params: { id: string } }) {
+export default function RecipePage({ params }: { params: { id: string } }) {
+  const { id } = params; // Destructure id here
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
@@ -101,9 +102,9 @@ export default function RecipePage({ params: { id } }: { params: { id: string } 
             </Button>
           </div>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <CardTitle className="text-4xl font-headline text-primary mb-2 md:mb-0">{recipe.title}</CardTitle>
+            <CardTitle className="text-4xl font-headline mb-2 md:mb-0 bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">{recipe.title}</CardTitle>
             {canEdit && (
-              <Link href={`/recipes/${recipe.id}/edit`} passHref>
+              <Link href={`/recipes/${recipe.id}/edit`}>
                 <Button variant="outline"><Edit3 className="mr-2 h-4 w-4" /> Edit Recipe</Button>
               </Link>
             )}

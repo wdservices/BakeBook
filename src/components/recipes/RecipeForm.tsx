@@ -131,7 +131,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl animate-scale-in">
       <CardHeader>
-        <CardTitle className="text-3xl text-primary font-headline">
+        <CardTitle className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">
           {mode === 'create' ? 'Add Your Baking Recipe' : 'Edit Your Baking Recipe'}
         </CardTitle>
         <CardDescription>
