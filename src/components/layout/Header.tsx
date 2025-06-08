@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Spinner from '../ui/Spinner';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const Header = () => {
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
@@ -52,25 +52,27 @@ const Header = () => {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-                <div className="p-4">
-                  <Link href="/" className="flex items-center gap-2 text-xl font-headline mb-6 group transition-colors">
-                    <ChefHat size={28} className="text-primary group-hover:text-[hsl(var(--blue))] transition-colors" />
-                    <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent group-hover:from-[hsl(var(--blue))] group-hover:to-primary transition-all">Bakebook</span>
-                  </Link>
-                  <div className="grid gap-3">
-                    <SheetClose asChild>
-                      <Button variant="ghost" asChild className="w-full justify-start text-base">
-                        <Link href="/recipes">Recipes</Link>
-                      </Button>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Button variant="ghost" asChild className="w-full justify-start text-base">
-                        <Link href="/bakers">Bakers</Link>
-                      </Button>
-                    </SheetClose>
-                    {/* Optional: Add auth links here too for mobile if needed */}
-                  </div>
+              <SheetContent side="left" className="w-[240px] sm:w-[300px] p-0">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle asChild>
+                    <Link href="/" className="flex items-center gap-2 text-xl font-headline group transition-colors">
+                      <ChefHat size={28} className="text-primary group-hover:text-[hsl(var(--blue))] transition-colors" />
+                      <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent group-hover:from-[hsl(var(--blue))] group-hover:to-primary transition-all">Bakebook</span>
+                    </Link>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="p-4 grid gap-3">
+                  <SheetClose asChild>
+                    <Button variant="ghost" asChild className="w-full justify-start text-base">
+                      <Link href="/recipes">Recipes</Link>
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button variant="ghost" asChild className="w-full justify-start text-base">
+                      <Link href="/bakers">Bakers</Link>
+                    </Button>
+                  </SheetClose>
+                  {/* Optional: Add auth links here too for mobile if needed */}
                 </div>
               </SheetContent>
             </Sheet>
