@@ -1,5 +1,5 @@
 
-import type { Recipe } from '@/types';
+import type { Recipe, Ingredient, RecipeStep } from '@/types';
 
 export const mockRecipes: Recipe[] = [
   {
@@ -31,6 +31,7 @@ export const mockRecipes: Recipe[] = [
       { id: 's1-6', description: 'Let cool in pan for 10 minutes before inverting onto a wire rack to cool completely.' },
     ],
     authorId: 'user1', // Example: Corresponds to a mock user ID
+    authorName: 'Regular User',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
     isPublic: true,
@@ -63,6 +64,7 @@ export const mockRecipes: Recipe[] = [
       { id: 's2-10', description: 'Let cool on a wire rack for at least 1 hour before slicing.' },
     ],
     authorId: 'admin1', // Example: Corresponds to a mock admin ID
+    authorName: 'Admin User',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     isPublic: true,
@@ -99,6 +101,7 @@ export const mockRecipes: Recipe[] = [
         { id: 's3-9', description: 'Let muffins cool in the tin for a few minutes before transferring them to a wire rack to cool completely.' },
     ],
     authorId: 'user1',
+    authorName: 'Regular User',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
     isPublic: false, // This one is private by default
@@ -109,13 +112,23 @@ export const getRecipeById = (id: string): Recipe | undefined => {
   return mockRecipes.find(recipe => recipe.id === id);
 };
 
-export const addRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Recipe => {
+export const addRecipe = (recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Recipe => {
   const newRecipe: Recipe = {
-    ...recipe,
-    id: `recipe-${Date.now()}-${mockRecipes.length}`, // More unique ID for mock data
+    id: `recipe-${Date.now()}-${mockRecipes.length}`,
+    title: recipeData.title,
+    description: recipeData.description,
+    imageUrl: recipeData.imageUrl, // Will be undefined if not in recipeData
+    prepTime: recipeData.prepTime,
+    cookTime: recipeData.cookTime,
+    servings: recipeData.servings,
+    // Deep copy ingredients and steps to ensure new objects are pushed
+    ingredients: recipeData.ingredients.map(ing => ({ ...ing })),
+    steps: recipeData.steps.map(step => ({ ...step })),
+    authorId: recipeData.authorId,
+    authorName: recipeData.authorName,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    isPublic: recipe.isPublic === undefined ? false : recipe.isPublic, // Default to private if not specified
+    isPublic: recipeData.isPublic ?? false, // Ensure isPublic is always a boolean
   };
   mockRecipes.push(newRecipe);
   return newRecipe;
@@ -125,9 +138,24 @@ export const updateRecipe = (id: string, updates: Partial<Omit<Recipe, 'id' | 'c
   const recipeIndex = mockRecipes.findIndex(recipe => recipe.id === id);
   if (recipeIndex === -1) return undefined;
 
+  const existingRecipe = mockRecipes[recipeIndex];
+
+  // Create new arrays for ingredients and steps if they are part of updates, by deep copying
+  const updatedIngredients = updates.ingredients 
+    ? updates.ingredients.map(ing => ({ ...ing })) 
+    : existingRecipe.ingredients.map(ing => ({ ...ing })); // Important: copy existing if not updated
+
+  const updatedSteps = updates.steps
+    ? updates.steps.map(step => ({ ...step }))
+    : existingRecipe.steps.map(step => ({ ...step })); // Important: copy existing if not updated
+
   mockRecipes[recipeIndex] = {
-    ...mockRecipes[recipeIndex],
-    ...updates,
+    ...existingRecipe,
+    ...updates, // Apply other updates like title, description, authorName etc.
+    ingredients: updatedIngredients, // Use the new or copied arrays
+    steps: updatedSteps,             // Use the new or copied arrays
+    // Ensure isPublic is handled correctly: if updates.isPublic is undefined, keep existing; otherwise, use updates.isPublic (defaulting null to false)
+    isPublic: updates.isPublic === undefined ? existingRecipe.isPublic : (updates.isPublic ?? false),
     updatedAt: new Date().toISOString(),
   };
   return mockRecipes[recipeIndex];
