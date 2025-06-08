@@ -51,20 +51,20 @@ const Header = () => {
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {isAdmin && (
-                    <Link href="/admin/dashboard" passHref legacyBehavior>
+                    <Link href="/admin/dashboard">
                       <DropdownMenuItem>
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Admin Dashboard
                       </DropdownMenuItem>
                     </Link>
                   )}
-                  <Link href="/dashboard" passHref legacyBehavior>
+                  <Link href="/dashboard">
                     <DropdownMenuItem>
                        <LayoutDashboard className="mr-2 h-4 w-4" />
                         My Dashboard
                     </DropdownMenuItem>
                   </Link>
-                  <Link href="/recipes/new" passHref legacyBehavior>
+                  <Link href="/recipes/new">
                     <DropdownMenuItem>
                        <PlusCircle className="mr-2 h-4 w-4" />
                         Create New Recipe
