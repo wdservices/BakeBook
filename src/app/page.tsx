@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChefHat, Search, PlusCircle } from 'lucide-react';
+import { ChefHat, Search, PlusCircle, BookOpen, PackageCheck, Smile } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -32,38 +32,40 @@ export default function HomePage() {
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.6s' }}>
-          Your ultimate baking companion. Discover thousands of baking recipes, create and sell your own, follow your favorite bakers, and share your masterpieces with a vibrant community of baking enthusiasts.
+          BakeBook is the ultimate app for bakers who want to organize, store, and manage their recipes digitally. Say goodbye to messy paper notes and hello to a seamless baking experience. With BakeBook, you can easily store your recipes, track ingredients, generate receipts, and access your favorite recipes anytime, anywhere. Whether you&apos;re a home baker or a professional, BakeBook is designed to make your baking journey easier and more enjoyable.
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
           <Link href="/recipes">
             <Button size="lg" className="text-lg px-8 py-6">
-              <Search className="mr-2 h-5 w-5" /> Explore Baking Recipes
+              <Search className="mr-2 h-5 w-5" /> Explore Your Recipes
             </Button>
           </Link>
           <Link href="/recipes/new">
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary text-primary hover:bg-primary/10">
-              <PlusCircle className="mr-2 h-5 w-5" /> Add Your Baking Recipe
+              <PlusCircle className="mr-2 h-5 w-5" /> Add New Recipe
             </Button>
           </Link>
         </div>
         
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in" style={{ animationDelay: '1s' }}>
-          <div className="p-6 bg-card/80 rounded-lg shadow-lg">
-            <h3 className="text-2xl font-headline text-primary mb-2">Endless Baking Inspiration</h3>
-            <p className="text-muted-foreground">From quick morning muffins to elaborate celebration cakes, find baking recipes for every occasion.</p>
+          <div className="p-6 bg-card/80 rounded-lg shadow-lg flex flex-col items-center">
+            <BookOpen size={48} className="text-primary mb-3"/>
+            <h3 className="text-2xl font-headline text-primary mb-2">Your Digital Recipe Hub</h3>
+            <p className="text-muted-foreground">Easily organize, store, and manage all your baking recipes in one place. Access them anytime, anywhere.</p>
           </div>
-          <div className="p-6 bg-card/80 rounded-lg shadow-lg">
-            <h3 className="text-2xl font-headline text-primary mb-2">Your Baking Portfolio</h3>
-            <p className="text-muted-foreground">Save your favorite baking recipes, organize them into collections, sell your creations, and track your baking journey.</p>
+          <div className="p-6 bg-card/80 rounded-lg shadow-lg flex flex-col items-center">
+            <PackageCheck size={48} className="text-primary mb-3"/>
+            <h3 className="text-2xl font-headline text-primary mb-2">Streamlined Baking Tools</h3>
+            <p className="text-muted-foreground">Track ingredients effortlessly, manage your baking projects, and even generate receipts for your sales or records.</p>
           </div>
-          <div className="p-6 bg-card/80 rounded-lg shadow-lg">
-            <h3 className="text-2xl font-headline text-primary mb-2">Connect & Share</h3>
-            <p className="text-muted-foreground">Contribute your own baking creations, share invaluable baking tips, and connect with fellow baking enthusiasts.</p>
+          <div className="p-6 bg-card/80 rounded-lg shadow-lg flex flex-col items-center">
+            <Smile size={48} className="text-primary mb-3"/>
+            <h3 className="text-2xl font-headline text-primary mb-2">Bake with Joy</h3>
+            <p className="text-muted-foreground">Focus on the joy of baking, not the hassle. BakeBook makes your baking journey smoother and more enjoyable.</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

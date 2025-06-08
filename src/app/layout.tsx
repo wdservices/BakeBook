@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: 'Bakebook - Your Baking Companion',
-  description: 'Discover, create, sell, and share amazing baking recipes. Follow your favorite bakers and exchange baking tips.',
+  description: 'BakeBook: Organize, store, and manage your baking recipes digitally. Track ingredients, generate receipts, and enjoy a seamless baking experience.',
 };
 
 export default function RootLayout({
@@ -37,4 +37,3 @@ export default function RootLayout({
     </html>
   );
 }
-
