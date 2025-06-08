@@ -38,7 +38,8 @@ export type User = {
   id: string; // Firebase UID
   email: string | null;
   name?: string | null; // Firebase displayName
-  brandName?: string | null; // Optional, not directly from Firebase Auth
-  role: UserRole; // Defaults to USER for Firebase Auth
-  photoURL?: string | null; // Firebase photoURL
+  brandName?: string | null; 
+  phoneNumber?: string | null;
+  role: UserRole; 
+  photoURL?: string | null; // Firebase photoURL (less relevant now, but can be kept for future)
 };

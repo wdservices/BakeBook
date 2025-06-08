@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Added import
+import { useRouter } from 'next/navigation';
 import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Users2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -19,14 +19,16 @@ import Spinner from '../ui/Spinner';
 
 const Header = () => {
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
-  const router = useRouter(); // Initialized router
+  const router = useRouter(); 
 
   const UserAvatar = () => {
     if (!user) return <UserCircle />;
+    // Use photoURL if available (e.g., from Google Sign-In, or future profile uploads)
+    // Otherwise, use initials from name or email
     const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 
-                     user.email ? user.email.substring(0,2).toUpperCase() : <UserCircle />;
+                     user.email ? user.email.substring(0,2).toUpperCase() : 'U';
     return (
-      <Avatar>
+      <Avatar className="h-8 w-8"> {/* Slightly smaller avatar */}
         <AvatarImage src={user.photoURL || undefined} alt={user.name || user.email || 'User'} />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
@@ -54,32 +56,25 @@ const Header = () => {
             <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
+                  <Button variant="ghost" className="flex items-center gap-2 p-1 rounded-full">
                     <UserAvatar />
-                    <span className="hidden md:inline">{user.name || user.email}</span>
+                    <span className="hidden md:inline text-sm">{user.name || user.email}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {/* Admin link temporarily available to all logged in users. Role management to be added. */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/dashboard">
+                  <DropdownMenuItem onClick={() => router.push('/admin/dashboard')}>
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Admin (Temp)
-                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard">
+                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                        <LayoutDashboard className="mr-2 h-4 w-4" />
                         My Dashboard
-                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/recipes/new">
+                  <DropdownMenuItem onClick={() => router.push('/recipes/new')}>
                        <PlusCircle className="mr-2 h-4 w-4" />
                         Create New Recipe
-                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">

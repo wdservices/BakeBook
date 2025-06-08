@@ -4,17 +4,26 @@
 import type { ReactNode } from 'react';
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, type User as FirebaseUser } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { 
+  onAuthStateChanged, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  updateProfile,
+  signOut as firebaseSignOut, 
+  type User as FirebaseUser 
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import type { User } from '@/types';
 import { UserRole } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import Spinner from '@/components/ui/Spinner';
+import type { SignUpFormValues, LoginFormValues } from '@/components/auth/AuthForm';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  loginWithGoogle: () => Promise<boolean>;
+  signupWithEmailPassword: (data: SignUpFormValues) => Promise<boolean>;
+  loginWithEmailPassword: (data: LoginFormValues) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
@@ -32,13 +41,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
       if (firebaseUser) {
+        // For existing session, brandName & phoneNumber would ideally come from Firestore.
+        // For now, they are only set during the initial signup process for the current session.
+        // If a user logs in directly, these fields might be null unless fetched from a DB.
+        const existingBrandName = user?.id === firebaseUser.uid ? user.brandName : undefined;
+        const existingPhoneNumber = user?.id === firebaseUser.uid ? user.phoneNumber : undefined;
+
         const appUser: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email,
           name: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-          role: UserRole.USER, // Default role for now
-          // brandName can be set through a user profile page later
+          photoURL: firebaseUser.photoURL, // Can be set later if profile editing is added
+          role: UserRole.USER, // Default role
+          brandName: existingBrandName, // Persisted from current session if available
+          phoneNumber: existingPhoneNumber, // Persisted from current session if available
         };
         setUser(appUser);
       } else {
@@ -46,36 +62,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // user dependency removed to avoid re-subscribing on local user state change
 
-  const loginWithGoogle = useCallback(async (): Promise<boolean> => {
+  const signupWithEmailPassword = useCallback(async (data: SignUpFormValues): Promise<boolean> => {
     setLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const firebaseUser = userCredential.user;
+      
+      await updateProfile(firebaseUser, { displayName: data.name });
+
       const appUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email,
-        name: firebaseUser.displayName,
-        photoURL: firebaseUser.photoURL,
+        name: data.name,
+        brandName: data.brandName,
+        phoneNumber: data.phoneNumber,
         role: UserRole.USER,
       };
-      setUser(appUser);
-      toast({ title: "Login Successful", description: `Welcome, ${appUser.name || appUser.email}!` });
+      setUser(appUser); // Set user in context with all details from form
       
-      // Check if there's a redirect query param
+      toast({ title: "Account Created!", description: `Welcome, ${data.name}!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
-      if (redirectPath) {
-        router.push(redirectPath);
-      } else {
-        router.push('/dashboard');
-      }
+      router.push(redirectPath || '/dashboard');
       return true;
     } catch (error: any) {
-      console.error("Google Sign-In error:", error);
-      toast({ title: "Login Failed", description: error.message || "Could not sign in with Google.", variant: "destructive" });
+      console.error("Sign-up error:", error);
+      toast({ title: "Sign-up Failed", description: error.message || "Could not create account.", variant: "destructive" });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [router, toast]);
+
+  const loginWithEmailPassword = useCallback(async (data: LoginFormValues): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      // onAuthStateChanged will handle setting the user state, including displayName.
+      // For brandName and phoneNumber, they are not stored in Firebase Auth.
+      // A proper solution would involve fetching these from Firestore upon login.
+      // For now, they will be missing if the user logs in directly without a previous session where they were set.
+      const firebaseUser = userCredential.user;
+      toast({ title: "Login Successful", description: `Welcome back, ${firebaseUser.displayName || firebaseUser.email}!` });
+      
+      const redirectPath = new URLSearchParams(window.location.search).get('redirect');
+      router.push(redirectPath || '/dashboard');
+      return true;
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast({ title: "Login Failed", description: error.message || "Could not sign in.", variant: "destructive" });
       return false;
     } finally {
       setLoading(false);
@@ -99,8 +137,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAuthenticated = !!user;
 
-  // If still loading the auth state, show a global spinner
-  // Allow access to login/signup pages even when loading initial auth state
   const authPages = ['/login', '/signup'];
   if (loading && !authPages.includes(pathname)) {
     return (
@@ -111,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loginWithGoogle, logout, loading }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
