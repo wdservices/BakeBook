@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
 import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { Recipe } from '@/types';
