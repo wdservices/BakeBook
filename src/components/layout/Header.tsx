@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Added import
 import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Users2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Spinner from '../ui/Spinner';
 
 const Header = () => {
-  const { user, isAuthenticated, logout, loading: authLoading, loginWithGoogle } = useAuth();
+  const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
+  const router = useRouter(); // Initialized router
 
   const UserAvatar = () => {
     if (!user) return <UserCircle />;
