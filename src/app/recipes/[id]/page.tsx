@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 
 
 export default function RecipePage({ params }: { params: { id: string } }) {
-  const { id } = params; // Destructure id here
+  // const { id } = params; // Destructuring removed
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
@@ -28,38 +28,51 @@ export default function RecipePage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     setLoading(true);
-    const fetchedRecipe = getRecipeById(id);
+    const recipeId = params.id; // Access params.id here
+    const fetchedRecipe = getRecipeById(recipeId);
     if (fetchedRecipe) {
       setRecipe(fetchedRecipe);
       // Initialize tracking states from localStorage if available, or default to false
-      const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${id}`);
-      if (storedCheckedIngredients) setCheckedIngredients(JSON.parse(storedCheckedIngredients));
-      else setCheckedIngredients(fetchedRecipe.ingredients.reduce((acc, ing) => ({...acc, [ing.id]: false}), {}));
+      const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${recipeId}`);
+      if (storedCheckedIngredients) {
+        setCheckedIngredients(JSON.parse(storedCheckedIngredients));
+      } else {
+        const initialChecked: Record<string, boolean> = {};
+        fetchedRecipe.ingredients.forEach(ing => initialChecked[ing.id] = false);
+        setCheckedIngredients(initialChecked);
+      }
       
-      const storedCompletedSteps = localStorage.getItem(`completedSteps_${id}`);
-      if (storedCompletedSteps) setCompletedSteps(JSON.parse(storedCompletedSteps));
-      else setCompletedSteps(fetchedRecipe.steps.reduce((acc, step) => ({...acc, [step.id]: false}), {}));
+      const storedCompletedSteps = localStorage.getItem(`completedSteps_${recipeId}`);
+      if (storedCompletedSteps) {
+        setCompletedSteps(JSON.parse(storedCompletedSteps));
+      } else {
+        const initialCompleted: Record<string, boolean> = {};
+        fetchedRecipe.steps.forEach(step => initialCompleted[step.id] = false);
+        setCompletedSteps(initialCompleted);
+      }
 
     }
     setLoading(false);
-  }, [id]);
+  }, [params.id]); // Use params.id in dependency array
 
   const handleIngredientToggle = (ingredientId: string) => {
+    const recipeId = params.id; // Access params.id here
     const newCheckedState = {
       ...checkedIngredients,
       [ingredientId]: !checkedIngredients[ingredientId],
     };
     setCheckedIngredients(newCheckedState);
-    localStorage.setItem(`checkedIngredients_${id}`, JSON.stringify(newCheckedState));
+    localStorage.setItem(`checkedIngredients_${recipeId}`, JSON.stringify(newCheckedState));
   };
 
   const handleStepToggle = (stepId: string) => {
-     const newCompletedState = {
+    const recipeId = params.id; // Access params.id here
+    const newCompletedState = {
       ...completedSteps,
       [stepId]: !completedSteps[stepId],
     };
     setCompletedSteps(newCompletedState);
-    localStorage.setItem(`completedSteps_${id}`, JSON.stringify(newCompletedState));
+    localStorage.setItem(`completedSteps_${recipeId}`, JSON.stringify(newCompletedState));
   };
 
   const stepsProgress = useMemo(() => {
