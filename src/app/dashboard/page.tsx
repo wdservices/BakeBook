@@ -192,32 +192,30 @@ export default function DashboardPage() {
             </Link>
           </Card>
         ) : displayedRecipesCount > 0 ? ( 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block">
-                  {recipe.imageUrl && (
-                    <div className="relative aspect-video w-full">
-                      <img
-                        src={recipe.imageUrl}
-                        alt={recipe.title}
-                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                        data-ai-hint="baked goods"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
+                  <div className="relative aspect-video w-full">
+                    <img
+                      src={recipe.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(recipe.title || 'Baked Good')}`}
+                      alt={recipe.title}
+                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                      data-ai-hint="baked goods recipe"
+                    />
+                  </div>
+                  <CardHeader className="p-3">
                     <div className="flex justify-between items-start">
-                        <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors">{recipe.title}</CardTitle>
-                        <Badge variant={recipe.isPublic ? "default" : "outline"} className="text-xs whitespace-nowrap">
-                            {recipe.isPublic ? <Eye size={14} className="mr-1"/> : <EyeOff size={14} className="mr-1"/>}
+                        <CardTitle className="text-lg font-headline group-hover:text-primary transition-colors">{recipe.title}</CardTitle>
+                        <Badge variant={recipe.isPublic ? "default" : "outline"} className="text-xs whitespace-nowrap ml-2">
+                            {recipe.isPublic ? <Eye size={12} className="mr-1"/> : <EyeOff size={12} className="mr-1"/>}
                             {recipe.isPublic ? "Public" : "Private"}
                         </Badge>
                     </div>
-                    <CardDescription className="text-muted-foreground line-clamp-2 h-[2.5rem]">{recipe.description}</CardDescription>
+                    <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-[2.25rem]">{recipe.description}</CardDescription>
                   </CardHeader>
                 </Link>
-                <CardContent className="pt-2 pb-4 px-4">
+                <CardContent className="p-3 pt-1">
                     <div className="flex items-center space-x-2">
                         <Switch
                             id={`publish-switch-${recipe.id}`}
@@ -225,21 +223,21 @@ export default function DashboardPage() {
                             onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false)}
                             aria-label={`Toggle ${recipe.title} visibility`}
                         />
-                        <Label htmlFor={`publish-switch-${recipe.id}`} className="text-sm text-muted-foreground cursor-pointer">
+                        <Label htmlFor={`publish-switch-${recipe.id}`} className="text-xs text-muted-foreground cursor-pointer">
                             {recipe.isPublic ? "Published" : "Private"}
                         </Label>
                     </div>
                 </CardContent>
-                <CardFooter className="p-4 mt-auto flex gap-2">
+                <CardFooter className="p-3 mt-auto flex gap-2">
                   <Link href={`/recipes/${recipe.id}/edit`} className="flex-1" legacyBehavior passHref>
-                    <Button variant="outline" className="w-full group-hover:bg-primary/10 group-hover:border-primary group-hover:text-primary transition-colors">
-                      <Edit3 size={18} className="mr-2" /> Edit
+                    <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10 group-hover:border-primary group-hover:text-primary transition-colors">
+                      <Edit3 size={16} className="mr-1" /> Edit
                     </Button>
                   </Link>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-auto group-hover:bg-destructive/90 transition-colors">
-                        <Trash2 size={18} />
+                      <Button variant="destructive" size="sm" className="w-auto group-hover:bg-destructive/90 transition-colors">
+                        <Trash2 size={16} />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -274,3 +272,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
