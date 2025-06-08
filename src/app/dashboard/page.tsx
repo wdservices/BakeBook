@@ -8,10 +8,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
-import { PlusCircle, User, Building, ChefHat, BarChart3, Edit3, Trash2, Users } from 'lucide-react';
-import RecipeGrid from '@/components/recipes/RecipeGrid';
+import { PlusCircle, User, Building, ChefHat, BarChart3, Edit3, Trash2, Users, Search } from 'lucide-react';
 import type { Recipe } from '@/types';
-import { mockRecipes, deleteRecipe as deleteRecipeData } from '@/data/mockRecipes'; // Assuming mockRecipes is your source
+import { mockRecipes, deleteRecipe as deleteRecipeData } from '@/data/mockRecipes';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -22,8 +21,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from '@/components/ui/input';
 
 
 export default function DashboardPage() {
@@ -32,6 +31,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [userRecipes, setUserRecipes] = useState<Recipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(true);
+  const [userRecipeSearchTerm, setUserRecipeSearchTerm] = useState('');
 
   useEffect(() => {
     if (authLoading) return;
@@ -53,8 +53,6 @@ export default function DashboardPage() {
   }, [isAuthenticated, authLoading, user, router]);
 
   const handleDeleteRecipe = (recipeId: string, recipeTitle: string) => {
-    // In a real app, this would be an API call.
-    // For mock data, we filter it out.
     const success = deleteRecipeData(recipeId);
     if (success) {
       setUserRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
@@ -84,6 +82,14 @@ export default function DashboardPage() {
     </Card>
   );
 
+  const searchedUserRecipes = useMemo(() => {
+    if (!userRecipeSearchTerm) return userRecipes;
+    return userRecipes.filter(recipe =>
+      recipe.title.toLowerCase().includes(userRecipeSearchTerm.toLowerCase()) ||
+      recipe.description.toLowerCase().includes(userRecipeSearchTerm.toLowerCase())
+    );
+  }, [userRecipes, userRecipeSearchTerm]);
+
 
   if (authLoading || (!isAuthenticated && !authLoading)) {
     return (
@@ -95,18 +101,18 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-     // Should be caught by the effect above, but as a fallback
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
   
-  const recipesCount = userRecipes.length;
+  const recipesCount = userRecipes.length; // This will be the total count before search
+  const displayedRecipesCount = searchedUserRecipes.length;
 
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-headline text-primary">Welcome, {user.name || user.email?.split('@')[0]}!</h1>
+          <h1 className="text-4xl font-headline text-primary">Welcome, {user.brandName || user.name || user.email?.split('@')[0]}!</h1>
           {user.brandName && <p className="text-lg text-muted-foreground">Your Bakery: <span className="font-semibold text-accent">{user.brandName}</span></p>}
         </div>
         <Link href="/recipes/new" passHref>
@@ -135,12 +141,38 @@ export default function DashboardPage() {
       </div>
       
       <div>
-        <h2 className="text-3xl font-headline text-primary mb-6">Your Baking Recipes</h2>
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <h2 className="text-3xl font-headline text-primary">Your Baking Recipes</h2>
+          {userRecipes.length > 0 && (
+            <div className="relative w-full md:w-auto md:max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search your recipes..."
+                    value={userRecipeSearchTerm}
+                    onChange={(e) => setUserRecipeSearchTerm(e.target.value)}
+                    className="pl-10 py-2 text-sm rounded-md"
+                />
+            </div>
+          )}
+        </div>
+
         {loadingRecipes ? (
            <div className="flex justify-center items-center min-h-[200px]"><Spinner size={36} /></div>
-        ) : userRecipes.length > 0 ? (
+        ) : userRecipes.length === 0 ? ( // No recipes at all
+          <Card className="text-center p-10 animate-scale-in">
+            <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
+            <p className="text-muted-foreground mb-6">Start your baking journey by adding your first recipe.</p>
+            <Link href="/recipes/new" passHref>
+              <Button size="lg">
+                <PlusCircle className="mr-2 h-5 w-5" /> Add Your First Baking Recipe
+              </Button>
+            </Link>
+          </Card>
+        ) : displayedRecipesCount > 0 ? ( // Has recipes and search yields results
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userRecipes.map((recipe) => (
+            {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block">
                   {recipe.imageUrl && (
@@ -190,16 +222,12 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-        ) : (
+        ) : ( // Has recipes but search yields no results
           <Card className="text-center p-10 animate-scale-in">
-            <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
-            <p className="text-muted-foreground mb-6">Start your baking journey by adding your first recipe.</p>
-            <Link href="/recipes/new" passHref>
-              <Button size="lg">
-                <PlusCircle className="mr-2 h-5 w-5" /> Add Your First Baking Recipe
-              </Button>
-            </Link>
+            <Search size={64} className="mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-2xl font-headline mb-2">No Recipes Found</h3>
+            <p className="text-muted-foreground">No recipes match your search term "{userRecipeSearchTerm}".</p>
+             <Button variant="link" onClick={() => setUserRecipeSearchTerm('')} className="mt-2">Clear Search</Button>
           </Card>
         )}
       </div>

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard } from 'lucide-react';
+import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,17 +51,23 @@ const Header = () => {
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {isAdmin && (
-                    <Link href="/admin/dashboard">
+                    <Link href="/admin/dashboard" passHref legacyBehavior>
                       <DropdownMenuItem>
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Admin Dashboard
                       </DropdownMenuItem>
                     </Link>
                   )}
-                  <Link href="/recipes/new">
+                  <Link href="/dashboard" passHref legacyBehavior>
                     <DropdownMenuItem>
-                       <UserCircle className="mr-2 h-4 w-4" /> {/* Placeholder for a "My Recipes" or similar icon */}
-                        Create Recipe
+                       <LayoutDashboard className="mr-2 h-4 w-4" />
+                        My Dashboard
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/recipes/new" passHref legacyBehavior>
+                    <DropdownMenuItem>
+                       <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Recipe
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
