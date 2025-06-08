@@ -104,7 +104,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
         };
         const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
         toast({ title: "Baking Recipe Created!", description: `"${createdRecipe.title}" has been successfully added.` });
-        router.push(`/recipes/${createdRecipe.id}`);
+        router.push('/dashboard'); // Redirect to dashboard
       } else if (mode === 'edit' && initialData) {
         const updatedRecipeData = {
           ...data,
@@ -115,7 +115,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
         const updated = updateRecipeData(initialData.id, updatedRecipeData);
         if (updated) {
           toast({ title: "Baking Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
-          router.push(`/recipes/${updated.id}`);
+          router.push('/dashboard'); // Redirect to dashboard
         } else {
            toast({ title: "Update Failed", description: "Could not update the baking recipe.", variant: "destructive" });
         }
@@ -220,3 +220,4 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 };
 
 export default RecipeForm;
+
