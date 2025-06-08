@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { UseFieldArrayReturn, Control } from 'react-hook-form';
@@ -32,8 +33,8 @@ const IngredientInput = ({ control, register, errors }: IngredientInputProps) =>
     <div className="space-y-4 p-4 border border-border rounded-md bg-card/50">
       <Label className="text-lg font-medium text-primary">Ingredients</Label>
       {fields.map((item, index) => (
-        <div key={item.id} className="flex items-end gap-3 p-3 border border-muted rounded-md animate-fade-in">
-          <div className="flex-grow space-y-1">
+        <div key={item.id} className="flex flex-col sm:flex-row sm:items-end gap-3 p-3 border border-muted rounded-md animate-fade-in">
+          <div className="flex-grow w-full sm:w-auto space-y-1">
             <Label htmlFor={`ingredients.${index}.name`}>Name</Label>
             <Input
               id={`ingredients.${index}.name`}
@@ -45,7 +46,7 @@ const IngredientInput = ({ control, register, errors }: IngredientInputProps) =>
               <p className="text-sm text-destructive">{errors.ingredients[index].name.message}</p>
             )}
           </div>
-          <div className="flex-grow space-y-1">
+          <div className="flex-grow w-full sm:w-auto space-y-1">
             <Label htmlFor={`ingredients.${index}.quantity`}>Quantity</Label>
             <Input
               id={`ingredients.${index}.quantity`}
@@ -57,7 +58,7 @@ const IngredientInput = ({ control, register, errors }: IngredientInputProps) =>
               <p className="text-sm text-destructive">{errors.ingredients[index].quantity.message}</p>
             )}
           </div>
-          <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} aria-label="Remove ingredient">
+          <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} aria-label="Remove ingredient" className="w-full sm:w-auto mt-2 sm:mt-0">
             <Trash2 size={18} />
           </Button>
         </div>
@@ -75,3 +76,4 @@ const IngredientInput = ({ control, register, errors }: IngredientInputProps) =>
 };
 
 export default IngredientInput;
+

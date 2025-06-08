@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { UseFieldArrayReturn, Control } from 'react-hook-form';
@@ -31,8 +32,8 @@ const StepInput = ({ control, register, errors }: StepInputProps) => {
     <div className="space-y-4 p-4 border border-border rounded-md bg-card/50">
       <Label className="text-lg font-medium text-primary">Steps</Label>
       {fields.map((item, index) => (
-        <div key={item.id} className="flex items-start gap-3 p-3 border border-muted rounded-md animate-fade-in">
-          <div className="flex-grow space-y-1">
+        <div key={item.id} className="flex flex-col sm:flex-row sm:items-start gap-3 p-3 border border-muted rounded-md animate-fade-in">
+          <div className="flex-grow w-full space-y-1">
             <Label htmlFor={`steps.${index}.description`}>Step {index + 1}</Label>
             <Textarea
               id={`steps.${index}.description`}
@@ -45,7 +46,7 @@ const StepInput = ({ control, register, errors }: StepInputProps) => {
               <p className="text-sm text-destructive">{errors.steps[index].description.message}</p>
             )}
           </div>
-          <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} aria-label="Remove step" className="mt-7">
+          <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} aria-label="Remove step" className="w-full sm:w-auto mt-2 sm:mt-7">
             <Trash2 size={18} />
           </Button>
         </div>
@@ -63,3 +64,4 @@ const StepInput = ({ control, register, errors }: StepInputProps) => {
 };
 
 export default StepInput;
+
