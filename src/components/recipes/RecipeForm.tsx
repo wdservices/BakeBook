@@ -21,11 +21,13 @@ import { useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 
 const ingredientSchema = z.object({
+  id: z.string().optional(), // Keep ID for existing items during edit
   name: z.string().min(1, "Ingredient name is required"),
   quantity: z.string().min(1, "Quantity is required"),
 });
 
 const stepSchema = z.object({
+  id: z.string().optional(), // Keep ID for existing items during edit
   description: z.string().min(10, "Step description must be at least 10 characters"),
 });
 
@@ -35,7 +37,6 @@ export const recipeFormSchema = z.object({
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal('')),
   prepTime: z.string().min(1, "Prep time is required"),
   cookTime: z.string().min(1, "Cook time is required"),
-  servings: z.coerce.number().min(1, "Servings must be at least 1"),
   ingredients: z.array(ingredientSchema).min(1, "At least one ingredient is required"),
   steps: z.array(stepSchema).min(1, "At least one step is required"),
   isPublic: z.boolean().optional(),
@@ -55,11 +56,12 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 
   const { control, register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm<RecipeFormValues>({
     resolver: zodResolver(recipeFormSchema),
-    defaultValues: initialData 
+    defaultValues: initialData
       ? {
           ...initialData,
-          ingredients: initialData.ingredients.map(({id: _id, ...rest}) => rest), 
-          steps: initialData.steps.map(({id: _id, ...rest}) => rest), 
+          // Ensure ingredients and steps retain their IDs for editing
+          ingredients: initialData.ingredients.map(ing => ({ id: ing.id, name: ing.name, quantity: ing.quantity })),
+          steps: initialData.steps.map(step => ({ id: step.id, description: step.description })),
           isPublic: initialData.isPublic ?? false,
         }
       : {
@@ -68,7 +70,6 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           imageUrl: '',
           prepTime: '',
           cookTime: '',
-          servings: 1,
           ingredients: [{ name: '', quantity: '' }],
           steps: [{ description: '' }],
           isPublic: false, // Default new recipes to private
@@ -79,8 +80,8 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
     if (initialData) {
       reset({
         ...initialData,
-        ingredients: initialData.ingredients.map(({id: _id, ...rest}) => rest),
-        steps: initialData.steps.map(({id: _id, ...rest}) => rest),
+        ingredients: initialData.ingredients.map(ing => ({ id: ing.id, name: ing.name, quantity: ing.quantity })),
+        steps: initialData.steps.map(step => ({ id: step.id, description: step.description })),
         isPublic: initialData.isPublic ?? false,
       });
     }
@@ -90,7 +91,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
   const onSubmit: SubmitHandler<RecipeFormValues> = async (data) => {
     if (!user) {
       toast({ title: "Authentication Error", description: "You must be logged in to create or edit recipes.", variant: "destructive" });
-      router.push('/login?redirect=/recipes/new'); // Or current path for edit
+      router.push('/login?redirect=' + (mode === 'create' ? '/recipes/new' : `/recipes/${initialData?.id}/edit`));
       return;
     }
 
@@ -98,25 +99,27 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
       if (mode === 'create') {
         const newRecipeData = {
           ...data,
-          authorId: user.id, 
-          authorName: user.name || user.email, 
+          authorId: user.id,
+          authorName: user.name || user.email,
+          // Ensure ingredients and steps get new IDs if not provided (should happen for new items)
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: `ing-${Date.now()}-${idx}` })),
           steps: data.steps.map((step, idx) => ({ ...step, id: `step-${Date.now()}-${idx}` })),
           isPublic: data.isPublic ?? false,
         };
+        // Cast to Omit Recipe 'id', 'createdAt', 'updatedAt'
         const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
         toast({ title: "Recipe Saved!", description: `"${createdRecipe.title}" has been successfully saved.` });
-        router.push('/dashboard'); 
+        router.push('/dashboard');
       } else if (mode === 'edit' && initialData) {
         const updatedRecipeData = {
           ...data,
-          authorId: user.id, 
-          authorName: user.name || user.email,
-          ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: initialData.ingredients[idx]?.id || `ing-${Date.now()}-${idx}`})),
-          steps: data.steps.map((step, idx) => ({ ...step, id: initialData.steps[idx]?.id || `step-${Date.now()}-${idx}`})),
+          // IDs for ingredients/steps are handled by map in defaultValues/reset or should be part of 'data' if already existing
+          ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: ing.id || initialData.ingredients[idx]?.id || `ing-new-${Date.now()}-${idx}`})),
+          steps: data.steps.map((step, idx) => ({ ...step, id: step.id || initialData.steps[idx]?.id || `step-new-${Date.now()}-${idx}`})),
           isPublic: data.isPublic ?? false,
         }
-        const updated = updateRecipeData(initialData.id, updatedRecipeData);
+        // Cast to Partial<Omit<Recipe, 'id' | 'createdAt' | 'authorId' | 'authorName'>>
+        const updated = updateRecipeData(initialData.id, updatedRecipeData as Partial<Omit<Recipe, 'id' | 'createdAt' | 'authorId' | 'authorName'>>);
         if (updated) {
           toast({ title: "Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
           router.push('/dashboard');
@@ -129,7 +132,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
       toast({ title: "Error", description: "An unexpected error occurred. Please try again.", variant: "destructive" });
     }
   };
-  
+
   if (authLoading && !user) return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/> <p className="ml-4">Loading user...</p></div>;
 
 
@@ -163,7 +166,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
             {errors.imageUrl && <p className="text-sm text-destructive">{errors.imageUrl.message}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="prepTime">Prep Time</Label>
               <Input id="prepTime" {...register('prepTime')} placeholder="e.g., 30 mins" />
@@ -174,13 +177,8 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
               <Input id="cookTime" {...register('cookTime')} placeholder="e.g., 1 hour" />
               {errors.cookTime && <p className="text-sm text-destructive">{errors.cookTime.message}</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="servings">Servings</Label>
-              <Input id="servings" type="number" {...register('servings')} placeholder="e.g., 4" />
-              {errors.servings && <p className="text-sm text-destructive">{errors.servings.message}</p>}
-            </div>
           </div>
-          
+
           <IngredientInput control={control} register={register} errors={errors} />
           <StepInput control={control} register={register} errors={errors} />
 

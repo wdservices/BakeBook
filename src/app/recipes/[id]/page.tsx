@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getRecipeById } from '@/data/mockRecipes';
 import type { Recipe, Ingredient, RecipeStep } from '@/types';
-import { Clock, Users, ChefHat, Edit3, ListChecks, CheckSquare, Square, ArrowLeft, UserCircle } from 'lucide-react';
+import { Clock, ChefHat, Edit3, ListChecks, CheckSquare, Square, ArrowLeft, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -27,11 +27,11 @@ export default function RecipePage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     setLoading(true);
-    const recipeId = params.id; 
+    const recipeId = params.id;
     const fetchedRecipe = getRecipeById(recipeId);
     if (fetchedRecipe) {
       setRecipe(fetchedRecipe);
-      
+
       const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${recipeId}`);
       if (storedCheckedIngredients) {
         setCheckedIngredients(JSON.parse(storedCheckedIngredients));
@@ -40,7 +40,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         fetchedRecipe.ingredients.forEach(ing => initialChecked[ing.id] = false);
         setCheckedIngredients(initialChecked);
       }
-      
+
       const storedCompletedSteps = localStorage.getItem(`completedSteps_${recipeId}`);
       if (storedCompletedSteps) {
         setCompletedSteps(JSON.parse(storedCompletedSteps));
@@ -55,7 +55,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   }, [params.id]);
 
   const handleIngredientToggle = (ingredientId: string) => {
-    const recipeId = params.id; 
+    const recipeId = params.id;
     const newCheckedState = {
       ...checkedIngredients,
       [ingredientId]: !checkedIngredients[ingredientId],
@@ -65,7 +65,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   };
 
   const handleStepToggle = (stepId: string) => {
-    const recipeId = params.id; 
+    const recipeId = params.id;
     const newCompletedState = {
       ...completedSteps,
       [stepId]: !completedSteps[stepId],
@@ -126,17 +126,16 @@ export default function RecipePage({ params }: { params: { id: string } }) {
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground pt-3">
             <div className="flex items-center gap-1"><Clock size={16} /> Prep: {recipe.prepTime}</div>
             <div className="flex items-center gap-1"><Clock size={16} /> Bake: {recipe.cookTime}</div>
-            <div className="flex items-center gap-1"><Users size={16} /> Servings: {recipe.servings}</div>
             <div className="flex items-center gap-1">
-                {recipe.authorName ? <ChefHat size={16} /> : <UserCircle size={16} />} 
+                {recipe.authorName ? <ChefHat size={16} /> : <UserCircle size={16} />}
                 By: {recipe.authorName || `User ${recipe.authorId.slice(0,6)}...`}
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-8 py-6">
           <Separator />
-          
+
           <div>
             <h2 className="text-2xl font-headline text-accent mb-4 flex items-center"><ListChecks className="mr-2"/>Ingredients</h2>
             <ul className="space-y-2 columns-1 md:columns-2">

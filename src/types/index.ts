@@ -18,7 +18,6 @@ export type Recipe = {
   imageUrl?: string;
   prepTime: string; // e.g., "30 mins"
   cookTime: string; // e.g., "1 hour"
-  servings: number;
   ingredients: Ingredient[];
   steps: RecipeStep[];
   authorId: string; // ID of the user who created it (Firebase UID)
@@ -38,8 +37,8 @@ export type User = {
   id: string; // Firebase UID
   email: string | null;
   name?: string | null; // Firebase displayName
-  brandName?: string | null; 
+  brandName?: string | null;
   phoneNumber?: string | null;
-  role: UserRole; 
-  photoURL?: string | null; // Firebase photoURL (less relevant now, but can be kept for future)
+  role: UserRole;
+  photoURL?: string | null; // Firebase photoURL
 };

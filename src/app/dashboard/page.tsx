@@ -92,7 +92,7 @@ export default function DashboardPage() {
       });
     }
   };
-  
+
   const DashboardCard = ({ title, value, icon: Icon }: { title: string | null; value: string | number | null; icon: React.ElementType; }) => (
     <Card className="hover:shadow-lg transition-shadow duration-300 animate-scale-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -100,7 +100,7 @@ export default function DashboardPage() {
         <Icon className="h-5 w-5 text-primary" />
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-foreground truncate">{String(value)}</div>
+        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground truncate">{String(value)}</div>
       </CardContent>
     </Card>
   );
@@ -127,16 +127,16 @@ export default function DashboardPage() {
     // This case should ideally be handled by the redirect above if !isAuthenticated
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
-  
-  const recipesCount = userRecipes.length; 
-  const displayedRecipesCount = searchedUserRecipes.length;
 
+  const recipesCount = userRecipes.length;
+  const displayedRecipesCount = searchedUserRecipes.length;
+  const welcomeName = user.brandName || user.name || user.email?.split('@')[0];
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {user.brandName || user.name || user.email?.split('@')[0]}!</h1>
+          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {welcomeName}!</h1>
           {user.brandName && <p className="text-lg text-muted-foreground">Your Bakery: <span className="font-semibold text-accent">{user.brandName}</span></p>}
         </div>
         <Link href="/recipes/new" passHref>
@@ -147,23 +147,23 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <DashboardCard 
-            title="Your Recipes" 
-            value={recipesCount} 
+        <DashboardCard
+            title="Your Recipes"
+            value={recipesCount}
             icon={ChefHat}
         />
-        <DashboardCard 
-            title="Account Email" 
-            value={user.email} 
+        <DashboardCard
+            title="Account Email"
+            value={user.email}
             icon={User}
         />
-         <DashboardCard 
-            title="Followers (Mock)" 
-            value={"120"} 
+         <DashboardCard
+            title="Followers (Mock)"
+            value={"120"}
             icon={Users}
         />
       </div>
-      
+
       <div>
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Your Baking Recipes</h2>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
 
         {loadingRecipes ? (
            <div className="flex justify-center items-center min-h-[200px]"><Spinner size={36} /></div>
-        ) : userRecipes.length === 0 ? ( 
+        ) : userRecipes.length === 0 ? (
           <Card className="text-center p-10 animate-scale-in">
             <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
             <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
@@ -194,8 +194,8 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </Card>
-        ) : displayedRecipesCount > 0 ? ( 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        ) : displayedRecipesCount > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block">
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                   <div className="flex items-center space-x-2">
                       <Switch
                           id={`publish-switch-${recipe.id}`}
-                          checked={recipe.isPublic}
+                          checked={recipe.isPublic ?? false}
                           onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false)}
                           aria-label={`Toggle ${recipe.title} visibility`}
                       />
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
+                          <AlertDialogAction
                             onClick={() => handleDeleteRecipe(recipe.id, recipe.title)}
                             className={buttonVariants({ variant: "destructive" })}
                           >
@@ -266,7 +266,7 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-        ) : ( 
+        ) : (
           <Card className="text-center p-10 animate-scale-in">
             <Search size={64} className="mx-auto text-muted-foreground mb-4" />
             <h3 className="text-2xl font-headline mb-2">No Recipes Found</h3>

@@ -9,7 +9,6 @@ export const mockRecipes: Recipe[] = [
     imageUrl: 'https://placehold.co/600x400.png?text=Chocolate+Cake',
     prepTime: '30 mins',
     cookTime: '45 mins', // Bake time
-    servings: 8,
     ingredients: [
       { id: 'i1-1', name: 'All-purpose flour', quantity: '1 1/2 cups' },
       { id: 'i1-2', name: 'Granulated sugar', quantity: '1 cup' },
@@ -43,7 +42,6 @@ export const mockRecipes: Recipe[] = [
     imageUrl: 'https://placehold.co/600x400.png?text=Sourdough+Bread',
     prepTime: '30 mins (plus starter feeding & bulk fermentation)',
     cookTime: '45 mins', // Bake time
-    servings: 1, // Represents 1 loaf
     ingredients: [
       { id: 'i2-1', name: 'Active sourdough starter', quantity: '100g' },
       { id: 'i2-2', name: 'Warm water (approx 80°F/27°C)', quantity: '350g' },
@@ -76,7 +74,6 @@ export const mockRecipes: Recipe[] = [
     imageUrl: 'https://placehold.co/600x400.png?text=Blueberry+Muffins',
     prepTime: '20 mins',
     cookTime: '25 mins', // Bake time
-    servings: 12, // Represents 12 muffins
     ingredients: [
         { id: 'i3-1', name: 'All-purpose flour', quantity: '2 cups' },
         { id: 'i3-2', name: 'Granulated sugar', quantity: '3/4 cup' },
@@ -117,49 +114,52 @@ export const addRecipe = (recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updated
     id: `recipe-${Date.now()}-${mockRecipes.length}`,
     title: recipeData.title,
     description: recipeData.description,
-    imageUrl: recipeData.imageUrl, // Will be undefined if not in recipeData
+    imageUrl: recipeData.imageUrl || undefined,
     prepTime: recipeData.prepTime,
     cookTime: recipeData.cookTime,
-    servings: recipeData.servings,
-    // Deep copy ingredients and steps to ensure new objects are pushed
-    ingredients: recipeData.ingredients.map(ing => ({ ...ing })),
-    steps: recipeData.steps.map(step => ({ ...step })),
+    ingredients: recipeData.ingredients.map(ing => ({ ...ing, id: ing.id || `ing-${Date.now()}-${Math.random()}` })),
+    steps: recipeData.steps.map(step => ({ ...step, id: step.id || `step-${Date.now()}-${Math.random()}` })),
     authorId: recipeData.authorId,
-    authorName: recipeData.authorName,
+    authorName: recipeData.authorName || undefined,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    isPublic: recipeData.isPublic ?? false, // Ensure isPublic is always a boolean
+    isPublic: recipeData.isPublic === undefined ? false : recipeData.isPublic,
   };
   mockRecipes.push(newRecipe);
   return newRecipe;
 };
 
-export const updateRecipe = (id: string, updates: Partial<Omit<Recipe, 'id' | 'createdAt' | 'authorId'>>): Recipe | undefined => {
+export const updateRecipe = (id: string, updates: Partial<Omit<Recipe, 'id' | 'createdAt' | 'authorId' | 'authorName'>>): Recipe | undefined => {
   const recipeIndex = mockRecipes.findIndex(recipe => recipe.id === id);
   if (recipeIndex === -1) return undefined;
 
   const existingRecipe = mockRecipes[recipeIndex];
 
-  // Create new arrays for ingredients and steps if they are part of updates, by deep copying
-  const updatedIngredients = updates.ingredients 
-    ? updates.ingredients.map(ing => ({ ...ing })) 
-    : existingRecipe.ingredients.map(ing => ({ ...ing })); // Important: copy existing if not updated
+  const updatedIngredients = updates.ingredients
+    ? updates.ingredients.map(ing => ({ ...ing, id: ing.id || `ing-${Date.now()}-${Math.random()}` }))
+    : existingRecipe.ingredients.map(ing => ({ ...ing }));
 
   const updatedSteps = updates.steps
-    ? updates.steps.map(step => ({ ...step }))
-    : existingRecipe.steps.map(step => ({ ...step })); // Important: copy existing if not updated
+    ? updates.steps.map(step => ({ ...step, id: step.id || `step-${Date.now()}-${Math.random()}` }))
+    : existingRecipe.steps.map(step => ({ ...step }));
 
-  mockRecipes[recipeIndex] = {
+  const updatedRecipe: Recipe = {
     ...existingRecipe,
-    ...updates, // Apply other updates like title, description, authorName etc.
-    ingredients: updatedIngredients, // Use the new or copied arrays
-    steps: updatedSteps,             // Use the new or copied arrays
-    // Ensure isPublic is handled correctly: if updates.isPublic is undefined, keep existing; otherwise, use updates.isPublic (defaulting null to false)
-    isPublic: updates.isPublic === undefined ? existingRecipe.isPublic : (updates.isPublic ?? false),
+    title: updates.title !== undefined ? updates.title : existingRecipe.title,
+    description: updates.description !== undefined ? updates.description : existingRecipe.description,
+    imageUrl: updates.imageUrl !== undefined ? updates.imageUrl : existingRecipe.imageUrl,
+    prepTime: updates.prepTime !== undefined ? updates.prepTime : existingRecipe.prepTime,
+    cookTime: updates.cookTime !== undefined ? updates.cookTime : existingRecipe.cookTime,
+    ingredients: updatedIngredients,
+    steps: updatedSteps,
+    isPublic: updates.isPublic === undefined ? existingRecipe.isPublic : updates.isPublic,
     updatedAt: new Date().toISOString(),
   };
+  
+  mockRecipes[recipeIndex] = updatedRecipe;
   return mockRecipes[recipeIndex];
 };
+
 
 export const deleteRecipe = (id: string): boolean => {
   const recipeIndex = mockRecipes.findIndex(recipe => recipe.id === id);

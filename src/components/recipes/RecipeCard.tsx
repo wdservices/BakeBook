@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, Eye } from 'lucide-react';
+import { Clock, Eye } from 'lucide-react';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -37,10 +37,6 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
             <div className="flex items-center gap-1">
               <Clock size={16} />
               <span>Bake: {recipe.cookTime}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users size={16} />
-              <span>{recipe.servings} servings</span>
             </div>
           </div>
         </CardContent>
