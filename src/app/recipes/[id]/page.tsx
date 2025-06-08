@@ -87,9 +87,10 @@ export default function RecipePage({ params }: { params: { id: string } }) {
             <Image
               src={recipe.imageUrl}
               alt={recipe.title}
-              layout="fill"
-              objectFit="cover"
+              fill={true}
+              className="object-cover"
               data-ai-hint="baking recipe"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
         )}

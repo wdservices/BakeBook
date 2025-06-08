@@ -19,10 +19,10 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
             <Image
               src={recipe.imageUrl || 'https://placehold.co/600x400.png?text=Recipe+Image'}
               alt={recipe.title}
-              layout="fill"
-              objectFit="cover"
-              className="transition-transform duration-300 group-hover:scale-105"
+              fill={true}
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               data-ai-hint="baked goods"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
             />
           </div>
         </CardHeader>
@@ -57,4 +57,3 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
 };
 
 export default RecipeCard;
-

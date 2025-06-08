@@ -90,11 +90,11 @@ export default function HomePage() {
       <Image
         src="https://placehold.co/1920x1080.png?text=Artisan+Bread"
         alt="Artisan Bread Background"
-        layout="fill"
-        objectFit="cover"
+        fill={true}
         quality={80}
-        className="z-0 opacity-20"
+        className="z-0 opacity-20 object-cover"
         data-ai-hint="artisan bread baking"
+        sizes="100vw"
       />
       
       {/* Overlay to ensure text readability */}
