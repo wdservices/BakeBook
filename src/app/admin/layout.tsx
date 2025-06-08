@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -11,30 +12,23 @@ import { Sidebar, SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButt
 import { LayoutDashboard, Users, Settings, ChefHat, LogOut, Home } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { isAdmin, isAuthenticated, loading, logout } = useAuth();
+  const { isAuthenticated, loading, logout } = useAuth(); // Removed isAdmin for now
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         router.push('/login?redirect=/admin/dashboard');
-      } else if (!isAdmin) {
-        router.push('/recipes'); // Or a specific "access denied" page
       }
+      // Add role-based access control here later if needed, e.g., using Firestore custom claims
     }
-  }, [isAdmin, isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (loading || !isAuthenticated || !isAdmin) {
+  if (loading || !isAuthenticated) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)]">
         <Spinner size={48} />
         {!loading && !isAuthenticated && <p className="mt-4">Redirecting to login...</p>}
-        {!loading && isAuthenticated && !isAdmin && (
-          <>
-            <p className="mt-4 text-destructive">Access Denied. Admins only.</p>
-            <Link href="/recipes" passHref legacyBehavior><Button variant="link" className="mt-2">Go to Recipes</Button></Link>
-          </>
-        )}
       </div>
     );
   }
@@ -58,7 +52,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-               {/* Placeholder for future user management page */}
               <Link href="/admin/dashboard" passHref legacyBehavior>
                 <SidebarMenuButton tooltip="Users">
                   <Users /> <span className="group-data-[collapsible=icon]:hidden">Users</span>
@@ -66,7 +59,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
-               {/* Placeholder for future recipe management page */}
               <Link href="/recipes" passHref legacyBehavior>
                 <SidebarMenuButton tooltip="Recipes Admin">
                   <ChefHat /> <span className="group-data-[collapsible=icon]:hidden">Recipes</span>
@@ -74,7 +66,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              {/* Placeholder for future settings page */}
               <Link href="/admin/dashboard" passHref legacyBehavior> 
                 <SidebarMenuButton tooltip="Settings">
                   <Settings /> <span className="group-data-[collapsible=icon]:hidden">Settings</span>

@@ -1,27 +1,25 @@
+
 'use client';
 
 import AuthForm from '@/components/auth/AuthForm';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import Spinner from '@/components/ui/Spinner';
-import { UserRole } from '@/types';
 
 export default function LoginPage() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      if (user?.role === UserRole.ADMIN) {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+    if (!authLoading && isAuthenticated) {
+      const redirect = searchParams.get('redirect');
+      router.push(redirect || '/dashboard');
     }
-  }, [isAuthenticated, loading, router, user]);
+  }, [isAuthenticated, authLoading, router, searchParams]);
 
-  if (loading || (!loading && isAuthenticated)) {
+  if (authLoading || (!authLoading && isAuthenticated)) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Spinner size={48} />

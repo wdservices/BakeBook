@@ -14,16 +14,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Spinner from '../ui/Spinner';
 
 const Header = () => {
-  const { user, isAuthenticated, isAdmin, logout, loading } = useAuth();
+  const { user, isAuthenticated, logout, loading: authLoading, loginWithGoogle } = useAuth();
 
-  const UserAvatar = () => (
-    <Avatar>
-      <AvatarImage src={(user?.brandName || user?.name) ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.brandName || user.name)}&background=random&color=fff` : undefined} alt={user?.brandName || user?.name || 'User'} />
-      <AvatarFallback>{user?.brandName ? user.brandName.substring(0, 2).toUpperCase() : user?.name ? user.name.substring(0, 2).toUpperCase() : <UserCircle />}</AvatarFallback>
-    </Avatar>
-  );
+  const UserAvatar = () => {
+    if (!user) return <UserCircle />;
+    const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 
+                     user.email ? user.email.substring(0,2).toUpperCase() : <UserCircle />;
+    return (
+      <Avatar>
+        <AvatarImage src={user.photoURL || undefined} alt={user.name || user.email || 'User'} />
+        <AvatarFallback>{initials}</AvatarFallback>
+      </Avatar>
+    );
+  };
 
   return (
     <header className="bg-card/80 backdrop-blur-md shadow-md sticky top-0 z-50">
@@ -33,46 +39,46 @@ const Header = () => {
           <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent group-hover:from-[hsl(var(--blue))] group-hover:to-primary transition-all">Bakebook</span>
         </Link>
         <nav className="flex items-center gap-2 md:gap-4">
-          <Link href="/recipes">
-            <Button variant="ghost">Recipes</Button>
-          </Link>
-          <Link href="/bakers">
-            <Button variant="ghost">Bakers</Button>
-          </Link>
-          {loading ? (
-            <Button variant="ghost" disabled>Loading...</Button>
-          ) : isAuthenticated ? (
+          <Button variant="ghost" asChild>
+            <Link href="/recipes">Recipes</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/bakers">Bakers</Link>
+          </Button>
+          
+          {authLoading ? (
+            <Spinner size={24} />
+          ) : isAuthenticated && user ? (
             <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <UserAvatar />
-                    <span className="hidden md:inline">{user?.brandName || user?.name || user?.email}</span>
+                    <span className="hidden md:inline">{user.name || user.email}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {isAdmin && (
+                  {/* Admin link temporarily available to all logged in users. Role management to be added. */}
+                  <DropdownMenuItem asChild>
                     <Link href="/admin/dashboard">
-                      <DropdownMenuItem>
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Admin Dashboard
-                      </DropdownMenuItem>
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Admin (Temp)
                     </Link>
-                  )}
-                  <Link href="/dashboard">
-                    <DropdownMenuItem>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
                        <LayoutDashboard className="mr-2 h-4 w-4" />
                         My Dashboard
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link href="/recipes/new">
-                    <DropdownMenuItem>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/recipes/new">
                        <PlusCircle className="mr-2 h-4 w-4" />
                         Create New Recipe
-                    </DropdownMenuItem>
-                  </Link>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -83,16 +89,12 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link href="/login">
-                <Button variant="ghost">
-                  <LogIn className="mr-2 h-4 w-4" /> Login
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" /> Sign Up
-                </Button>
-              </Link>
+              <Button variant="ghost" onClick={() => router.push('/login')}>
+                <LogIn className="mr-2 h-4 w-4" /> Login
+              </Button>
+              <Button onClick={() => router.push('/signup')}>
+                <UserPlus className="mr-2 h-4 w-4" /> Sign Up
+              </Button>
             </>
           )}
         </nav>

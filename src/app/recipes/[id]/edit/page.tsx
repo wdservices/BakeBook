@@ -1,3 +1,4 @@
+
 'use client';
 
 import RecipeForm from '@/components/recipes/RecipeForm';
@@ -7,7 +8,7 @@ import { useEffect, useState } from 'react';
 import Spinner from '@/components/ui/Spinner';
 import { getRecipeById } from '@/data/mockRecipes';
 import type { Recipe } from '@/types';
-import { UserRole } from '@/types';
+// UserRole removed as isAdmin logic is simplified for now
 
 export default function EditRecipePage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -26,9 +27,13 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
 
     const fetchedRecipe = getRecipeById(params.id);
     if (fetchedRecipe) {
-      if (user && (fetchedRecipe.authorId === user.id || user.role === UserRole.ADMIN)) {
+      // For now, any authenticated user can edit any recipe if they know the ID.
+      // Or, we only allow the original author.
+      // The `user.role === UserRole.ADMIN` check is removed for now.
+      if (user && (fetchedRecipe.authorId === user.id)) {
         setRecipe(fetchedRecipe);
       } else {
+        // If not the author, deny access. Could add admin override later.
         setAccessDenied(true);
       }
     } else {
@@ -49,7 +54,7 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
   if (accessDenied || !recipe) {
     return (
       <div className="text-center py-10">
-        <h1 className="text-3xl font-bold text-destructive mb-4">Access Denied</h1>
+        <h1 className="text-3xl font-bold text-destructive mb-4">Access Denied or Recipe Not Found</h1>
         <p className="text-muted-foreground">You do not have permission to edit this recipe, or the recipe does not exist.</p>
         <Button onClick={() => router.push('/recipes')} className="mt-6">Go to Recipes</Button>
       </div>

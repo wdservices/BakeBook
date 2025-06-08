@@ -90,6 +90,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
   const onSubmit: SubmitHandler<RecipeFormValues> = async (data) => {
     if (!user) {
       toast({ title: "Authentication Error", description: "You must be logged in to create or edit recipes.", variant: "destructive" });
+      router.push('/login?redirect=/recipes/new'); // Or current path for edit
       return;
     }
 
@@ -97,17 +98,20 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
       if (mode === 'create') {
         const newRecipeData = {
           ...data,
-          authorId: user.id,
+          authorId: user.id, // Use Firebase UID
+          authorName: user.name || user.email, // Store author's display name
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: `ing-${Date.now()}-${idx}` })),
           steps: data.steps.map((step, idx) => ({ ...step, id: `step-${Date.now()}-${idx}` })),
           isPublic: data.isPublic ?? false,
         };
         const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
         toast({ title: "Baking Recipe Created!", description: `"${createdRecipe.title}" has been successfully added.` });
-        router.push('/dashboard'); // Redirect to dashboard
+        router.push('/dashboard'); 
       } else if (mode === 'edit' && initialData) {
         const updatedRecipeData = {
           ...data,
+          authorId: user.id, // Ensure authorId is current user, though typically this shouldn't change on edit by owner
+          authorName: user.name || user.email,
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: initialData.ingredients[idx]?.id || `ing-${Date.now()}-${idx}`})),
           steps: data.steps.map((step, idx) => ({ ...step, id: initialData.steps[idx]?.id || `step-${Date.now()}-${idx}`})),
           isPublic: data.isPublic ?? false,
@@ -115,7 +119,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
         const updated = updateRecipeData(initialData.id, updatedRecipeData);
         if (updated) {
           toast({ title: "Baking Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
-          router.push('/dashboard'); // Redirect to dashboard
+          router.push('/dashboard');
         } else {
            toast({ title: "Update Failed", description: "Could not update the baking recipe.", variant: "destructive" });
         }
@@ -126,7 +130,8 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
     }
   };
   
-  if (authLoading) return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/></div>;
+  if (authLoading && !user) return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/> <p className="ml-4">Loading user...</p></div>;
+
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl animate-scale-in">
@@ -220,4 +225,3 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 };
 
 export default RecipeForm;
-

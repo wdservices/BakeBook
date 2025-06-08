@@ -21,7 +21,8 @@ export type Recipe = {
   servings: number;
   ingredients: Ingredient[];
   steps: RecipeStep[];
-  authorId: string; // ID of the user who created it
+  authorId: string; // ID of the user who created it (Firebase UID)
+  authorName?: string; // Display name of the author
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   isPublic?: boolean; // True if public, false/undefined if private
@@ -34,10 +35,10 @@ export enum UserRole {
 }
 
 export type User = {
-  id: string;
-  email: string;
-  name?: string;
-  brandName?: string;
-  role: UserRole;
-  // Optional: avatarUrl, bio
+  id: string; // Firebase UID
+  email: string | null;
+  name?: string | null; // Firebase displayName
+  brandName?: string | null; // Optional, not directly from Firebase Auth
+  role: UserRole; // Defaults to USER for Firebase Auth
+  photoURL?: string | null; // Firebase photoURL
 };

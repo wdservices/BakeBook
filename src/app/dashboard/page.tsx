@@ -47,6 +47,7 @@ export default function DashboardPage() {
     if (user) {
       setLoadingRecipes(true);
       // Simulate fetching user-specific recipes
+      // In a real app with Firebase, you'd query recipes where authorId === user.id
       setTimeout(() => {
         const filteredRecipes = mockRecipes.filter(recipe => recipe.authorId === user.id);
         setUserRecipes(filteredRecipes);
@@ -91,14 +92,14 @@ export default function DashboardPage() {
     }
   };
   
-  const DashboardCard = ({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType; }) => (
+  const DashboardCard = ({ title, value, icon: Icon }: { title: string | null; value: string | number | null; icon: React.ElementType; }) => (
     <Card className="hover:shadow-lg transition-shadow duration-300 animate-scale-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <Icon className="h-5 w-5 text-primary" />
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-foreground">{value}</div>
+        <div className="text-3xl font-bold text-foreground truncate">{String(value)}</div>
       </CardContent>
     </Card>
   );
@@ -122,6 +123,7 @@ export default function DashboardPage() {
   }
 
   if (!user) {
+    // This case should ideally be handled by the redirect above if !isAuthenticated
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
   
@@ -133,7 +135,7 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {user.brandName || user.name || user.email?.split('@')[0]}!</h1>
+          <h1 className="text-4xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Welcome, {user.name || user.email?.split('@')[0]}!</h1>
           {user.brandName && <p className="text-lg text-muted-foreground">Your Bakery: <span className="font-semibold text-accent">{user.brandName}</span></p>}
         </div>
         <Link href="/recipes/new" passHref>
@@ -143,7 +145,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <DashboardCard 
             title="Your Recipes" 
             value={recipesCount} 
@@ -192,7 +194,7 @@ export default function DashboardPage() {
             </Link>
           </Card>
         ) : displayedRecipesCount > 0 ? ( 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block">
