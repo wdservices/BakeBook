@@ -12,7 +12,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.push('/recipes');
+      router.push('/dashboard');
     }
   }, [isAuthenticated, loading, router]);
 

@@ -35,6 +35,7 @@ export type User = {
   id: string;
   email: string;
   name?: string;
+  brandName?: string;
   role: UserRole;
   // Optional: avatarUrl, bio
 };

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Building } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,6 +20,7 @@ const loginSchema = z.object({
 
 const signupSchema = loginSchema.extend({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }).optional(),
+  brandName: z.string().min(2, { message: 'Brand name must be at least 2 characters' }).optional(),
   confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -50,7 +51,7 @@ const AuthForm = ({ mode }: AuthFormProps) => {
       await login(data.email, data.password);
     } else if (mode === 'signup') {
       const signupData = data as SignupFormInputs;
-      await signup(signupData.email, signupData.password, signupData.name);
+      await signup(signupData.email, signupData.password, signupData.name, signupData.brandName);
     }
   };
 
@@ -59,23 +60,33 @@ const AuthForm = ({ mode }: AuthFormProps) => {
       <Card className="w-full max-w-md shadow-xl animate-scale-in">
         <CardHeader>
           <CardTitle className="text-3xl text-center text-primary">
-            {mode === 'login' ? 'Welcome Back!' : 'Create Your Account'}
+            {mode === 'login' ? 'Welcome Back!' : 'Create Your Baking Account'}
           </CardTitle>
           <CardDescription className="text-center">
-            {mode === 'login' ? 'Sign in to continue to Bakebook.' : 'Join Bakebook to discover, share, and sell baking recipes.'}
+            {mode === 'login' ? 'Sign in to continue to Bakebook.' : 'Join Bakebook to store your recipes, share tips, and connect with fellow bakers.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {mode === 'signup' && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input id="name" type="text" placeholder="Your Name" {...register('name' as any)} className="pl-10" />
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Your Name (Optional)</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input id="name" type="text" placeholder="e.g., Jane Doe" {...register('name' as any)} className="pl-10" />
+                  </div>
+                  {errors.name && <p className="text-sm text-destructive">{(errors.name as any).message}</p>}
                 </div>
-                {errors.name && <p className="text-sm text-destructive">{(errors.name as any).message}</p>}
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brandName">Brand Name / Bakery Name (Optional)</Label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input id="brandName" type="text" placeholder="e.g., Jane's Delights" {...register('brandName' as any)} className="pl-10" />
+                  </div>
+                  {errors.brandName && <p className="text-sm text-destructive">{(errors.brandName as any).message}</p>}
+                </div>
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -152,4 +163,3 @@ const AuthForm = ({ mode }: AuthFormProps) => {
 };
 
 export default AuthForm;
-

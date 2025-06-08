@@ -9,7 +9,7 @@ export default function HomePage() {
     {
       icon: LibraryBig,
       title: "Digital Recipe Storage",
-      description: "Store all your recipes in one place, organized and easily accessible.",
+      description: "Store all your baking recipes in one place, organized and easily accessible.",
       dataAiHint: "digital recipe book"
     },
     {
@@ -19,21 +19,21 @@ export default function HomePage() {
       dataAiHint: "baking checklist"
     },
     {
-      icon: ReceiptText,
-      title: "Receipt Generation",
-      description: "Create and export receipts in PDF format for your baking business.",
-      dataAiHint: "business invoice"
+      icon: Users2,
+      title: "Baker Community",
+      description: "Follow your favorite bakers, share tips, and discover new recipes.",
+      dataAiHint: "baking community"
     },
     {
-      icon: Users2,
-      title: "User-Friendly Interface",
-      description: "Simple and intuitive design for bakers of all skill levels.",
-      dataAiHint: "easy interface"
+      icon: ReceiptText,
+      title: "Sell Your Recipes (Coming Soon!)",
+      description: "Monetize your unique baking creations by selling them to other bakers.",
+      dataAiHint: "sell recipes"
     },
     {
       icon: Sparkles,
-      title: "AI Recommendations",
-      description: "Get smart suggestions for baking times and temperatures.",
+      title: "AI Baking Assistant",
+      description: "Get smart suggestions for baking times, temperatures, and ingredient substitutions.",
       dataAiHint: "ai cooking"
     },
     {
@@ -49,38 +49,38 @@ export default function HomePage() {
       number: 1,
       icon: UserPlus,
       title: "Sign Up",
-      description: "Create your account in seconds with just a few clicks."
+      description: "Create your baker account in seconds and set up your brand."
     },
     {
       number: 2,
       icon: Edit3,
       title: "Add Recipes",
-      description: "Input your recipes with ingredients, measurements, and baking instructions."
+      description: "Input your cherished baking recipes with ingredients, measurements, and instructions."
     },
     {
       number: 3,
       icon: FileText,
-      title: "Bake with Ease",
-      description: "Use the app to track your progress and generate receipts."
+      title: "Organize & Bake",
+      description: "Use BakeBook to keep your recipes tidy and guide your baking sessions."
     },
     {
       number: 4,
-      icon: BarChartBig, // Using BarChartBig as a proxy for "Enjoy Baking" with stats/progress
-      title: "Enjoy Baking",
-      description: "Access your recipes anytime, anywhere from any device."
+      icon: Users2, 
+      title: "Connect & Share",
+      description: "Follow other bakers, share tips, and build your baking network."
     }
   ];
 
   const testimonials = [
     {
-      quote: "BakeBook has completely transformed how I manage my recipes. It's so easy to use!",
+      quote: "BakeBook has completely transformed how I manage my baking recipes. It's so easy to use!",
       author: "Sarah, Home Baker",
       dataAiHint: "positive review"
     },
     {
-      quote: "The receipt feature is a game-changer for my bakery business.",
-      author: "John, Professional Baker",
-      dataAiHint: "business testimonial"
+      quote: "Finally, a dedicated app for us bakers! The digital storage is a lifesaver.",
+      author: "John, Professional Pastry Chef",
+      dataAiHint: "baker testimonial"
     }
   ];
 
@@ -101,7 +101,7 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-background/80 z-10"></div>
 
       {/* Content */}
-      <div className="relative z-20 animate-fade-in space-y-12 py-12"> {/* Increased space-y and added py-12 */}
+      <div className="relative z-20 animate-fade-in space-y-12 py-12"> 
         <div className="flex justify-center">
           <ChefHat size={128} className="text-primary animate-scale-in" style={{ animationDelay: '0.2s' }} />
         </div>
@@ -117,12 +117,12 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
           <Link href="/recipes">
             <Button size="lg" className="text-lg px-8 py-6">
-              <Search className="mr-2 h-5 w-5" /> Explore Your Baking Recipes
+              <Search className="mr-2 h-5 w-5" /> Explore Baking Recipes
             </Button>
           </Link>
-          <Link href="/recipes/new">
+          <Link href="/signup">
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary text-primary hover:bg-primary/10">
-              <PlusCircle className="mr-2 h-5 w-5" /> Add New Baking Recipe
+              <UserPlus className="mr-2 h-5 w-5" /> Join the Bakers!
             </Button>
           </Link>
         </div>
@@ -134,9 +134,9 @@ export default function HomePage() {
             <p className="text-muted-foreground">Easily organize, store, and manage all your baking recipes in one place. Access them anytime, anywhere.</p>
           </div>
           <div className="p-6 bg-card/80 rounded-lg shadow-lg flex flex-col items-center">
-            <PackageCheck size={48} className="text-primary mb-3"/>
-            <h3 className="text-2xl font-headline text-primary mb-2">Streamlined Baking Tools</h3>
-            <p className="text-muted-foreground">Track ingredients effortlessly, manage your baking projects, and even generate receipts for your sales or records.</p>
+            <Users2 size={48} className="text-primary mb-3"/>
+            <h3 className="text-2xl font-headline text-primary mb-2">Connect with Bakers</h3>
+            <p className="text-muted-foreground">Share your baking tips, follow your favorite bakers, and become part of a vibrant community.</p>
           </div>
           <div className="p-6 bg-card/80 rounded-lg shadow-lg flex flex-col items-center">
             <Smile size={48} className="text-primary mb-3"/>
@@ -196,7 +196,7 @@ export default function HomePage() {
         <section className="py-12 md:py-16 animate-fade-in" style={{ animationDelay: '1.6s' }}>
           <div className="container mx-auto px-4">
             <h2 className="text-4xl md:text-5xl font-headline text-center text-primary mb-12">
-              What Our Users Say
+              What Our Bakers Say
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {testimonials.map((testimonial, index) => (
@@ -217,5 +217,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

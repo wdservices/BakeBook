@@ -14,7 +14,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, pass: string) => Promise<boolean>; // pass is unused for mock
   logout: () => void;
-  signup: (email: string, pass: string, name?:string) => Promise<boolean>; // pass is unused for mock
+  signup: (email: string, pass: string, name?:string, brandName?: string) => Promise<boolean>; // pass is unused for mock
   loading: boolean;
 }
 
@@ -50,7 +50,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('bakebookUser', JSON.stringify(foundUser));
       toast({ title: "Login Successful", description: `Welcome back, ${foundUser.name || foundUser.email}!` });
       setLoading(false);
-      router.push(foundUser.role === UserRole.ADMIN ? '/admin/dashboard' : '/recipes');
+      if (foundUser.role === UserRole.ADMIN) {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
       return true;
     }
     toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
@@ -58,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   }, [router, toast]);
 
-  const signup = useCallback(async (email: string, _pass: string, name?: string): Promise<boolean> => {
+  const signup = useCallback(async (email: string, _pass: string, name?: string, brandName?: string): Promise<boolean> => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     if (mockUsers.find(u => u.email === email)) {
@@ -70,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: `user${mockUsers.length + 1}`,
       email,
       name: name || email.split('@')[0],
+      brandName: brandName || `${name || email.split('@')[0]}'s Bakery`,
       role: UserRole.USER, // Default role
     };
     mockUsers.push(newUser); // Add to mock data (in real app, this would be DB)
@@ -77,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('bakebookUser', JSON.stringify(newUser));
     toast({ title: "Signup Successful", description: `Welcome, ${newUser.name || newUser.email}!` });
     setLoading(false);
-    router.push('/recipes');
+    router.push('/dashboard');
     return true;
   }, [router, toast]);
 

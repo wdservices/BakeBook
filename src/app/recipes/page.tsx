@@ -9,7 +9,7 @@ import type { Recipe } from '@/types';
 import Spinner from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -45,18 +45,21 @@ export default function RecipesPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-4xl font-headline text-primary">Discover Baking Recipes</h1>
-        <Link href="/recipes/new" passHref>
-          <Button>
-            <PlusCircle className="mr-2 h-5 w-5" /> Create New Baking Recipe
-          </Button>
-        </Link>
+        <h1 className="text-4xl font-headline text-primary">Explore Baking Recipes</h1>
+        {/* "Create New Recipe" button removed from here, now on user dashboard */}
       </div>
       
       <RecipeSearchInput searchTerm={searchTerm} onSearchChange={setSearchTerm} />
       
-      <RecipeGrid recipes={filteredRecipes} />
+      {filteredRecipes.length > 0 ? (
+         <RecipeGrid recipes={filteredRecipes} />
+      ) : (
+        <div className="text-center py-10">
+            <Search size={64} className="mx-auto text-muted-foreground mb-4" />
+            <p className="text-xl text-muted-foreground mb-2">No baking recipes found for your search.</p>
+            <p className="text-sm text-muted-foreground">Try a different keyword or explore all recipes by clearing the search.</p>
+        </div>
+      )}
     </div>
   );
 }
-
