@@ -1,3 +1,4 @@
+
 export type Ingredient = {
   id: string;
   name: string;
@@ -23,6 +24,7 @@ export type Recipe = {
   authorId: string; // ID of the user who created it
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  isPublic?: boolean; // True if public, false/undefined if private
   // Optional: difficulty, tags, nutritionInfo
 };
 

@@ -33,6 +33,7 @@ export const mockRecipes: Recipe[] = [
     authorId: 'user1',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+    isPublic: true,
   },
   {
     id: '2',
@@ -64,6 +65,7 @@ export const mockRecipes: Recipe[] = [
     authorId: 'admin1',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    isPublic: true,
   },
   {
     id: '3',
@@ -99,6 +101,7 @@ export const mockRecipes: Recipe[] = [
     authorId: 'user1',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+    isPublic: false, // This one is private by default
   },
 ];
 
@@ -112,6 +115,7 @@ export const addRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>
     id: (mockRecipes.length + 1).toString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    isPublic: recipe.isPublic === undefined ? false : recipe.isPublic, // Default to private if not specified
   };
   mockRecipes.push(newRecipe);
   return newRecipe;
@@ -135,4 +139,3 @@ export const deleteRecipe = (id: string): boolean => {
   mockRecipes.splice(recipeIndex, 1);
   return true;
 };
-

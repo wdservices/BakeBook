@@ -20,13 +20,15 @@ export default function RecipesPage() {
     // Simulate fetching data
     setLoading(true);
     setTimeout(() => {
-      setRecipes(mockRecipes);
+      // Only show public recipes on this page
+      setRecipes(mockRecipes.filter(recipe => recipe.isPublic));
       setLoading(false);
     }, 500);
   }, []);
 
   const filteredRecipes = useMemo(() => {
     if (!searchTerm) return recipes;
+    // Ensure recipes are already filtered for public visibility before applying search
     return recipes.filter(recipe =>
       recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       recipe.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,7 +47,7 @@ export default function RecipesPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-4xl font-headline text-primary">Explore Baking Recipes</h1>
+        <h1 className="text-4xl font-headline text-primary">Explore Public Baking Recipes</h1>
         {/* "Create New Recipe" button removed from here, now on user dashboard */}
       </div>
       
@@ -56,8 +58,8 @@ export default function RecipesPage() {
       ) : (
         <div className="text-center py-10">
             <Search size={64} className="mx-auto text-muted-foreground mb-4" />
-            <p className="text-xl text-muted-foreground mb-2">No baking recipes found for your search.</p>
-            <p className="text-sm text-muted-foreground">Try a different keyword or explore all recipes by clearing the search.</p>
+            <p className="text-xl text-muted-foreground mb-2">No public baking recipes found.</p>
+            <p className="text-sm text-muted-foreground">Try a different keyword or check back later for new public recipes.</p>
         </div>
       )}
     </div>

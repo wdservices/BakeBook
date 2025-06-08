@@ -8,9 +8,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
-import { PlusCircle, User, Building, ChefHat, BarChart3, Edit3, Trash2, Users, Search } from 'lucide-react';
+import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { Recipe } from '@/types';
-import { mockRecipes, deleteRecipe as deleteRecipeData } from '@/data/mockRecipes';
+import { mockRecipes, deleteRecipe as deleteRecipeData, updateRecipe } from '@/data/mockRecipes';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -23,6 +23,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 
 export default function DashboardPage() {
@@ -68,8 +71,27 @@ export default function DashboardPage() {
       });
     }
   };
+
+  const handleTogglePublic = (recipeId: string, currentIsPublic: boolean) => {
+    const updatedRecipe = updateRecipe(recipeId, { isPublic: !currentIsPublic });
+    if (updatedRecipe) {
+      setUserRecipes(prevRecipes =>
+        prevRecipes.map(r => (r.id === recipeId ? updatedRecipe : r))
+      );
+      toast({
+        title: "Recipe Visibility Updated",
+        description: `"${updatedRecipe.title}" is now ${updatedRecipe.isPublic ? "public" : "private"}.`,
+      });
+    } else {
+      toast({
+        title: "Update Failed",
+        description: "Could not update recipe visibility.",
+        variant: "destructive",
+      });
+    }
+  };
   
-  const DashboardCard = ({ title, value, icon: Icon, actionButton }: { title: string; value: string | number; icon: React.ElementType; actionButton?: React.ReactNode }) => (
+  const DashboardCard = ({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType; }) => (
     <Card className="hover:shadow-lg transition-shadow duration-300 animate-scale-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
@@ -77,7 +99,6 @@ export default function DashboardPage() {
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold text-foreground">{value}</div>
-         {actionButton && <div className="mt-4">{actionButton}</div>}
       </CardContent>
     </Card>
   );
@@ -104,7 +125,7 @@ export default function DashboardPage() {
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
   
-  const recipesCount = userRecipes.length; // This will be the total count before search
+  const recipesCount = userRecipes.length; 
   const displayedRecipesCount = searchedUserRecipes.length;
 
 
@@ -159,7 +180,7 @@ export default function DashboardPage() {
 
         {loadingRecipes ? (
            <div className="flex justify-center items-center min-h-[200px]"><Spinner size={36} /></div>
-        ) : userRecipes.length === 0 ? ( // No recipes at all
+        ) : userRecipes.length === 0 ? ( 
           <Card className="text-center p-10 animate-scale-in">
             <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
             <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
@@ -170,7 +191,7 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </Card>
-        ) : displayedRecipesCount > 0 ? ( // Has recipes and search yields results
+        ) : displayedRecipesCount > 0 ? ( 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
@@ -186,10 +207,29 @@ export default function DashboardPage() {
                     </div>
                   )}
                   <CardHeader>
-                    <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors">{recipe.title}</CardTitle>
+                    <div className="flex justify-between items-start">
+                        <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors">{recipe.title}</CardTitle>
+                        <Badge variant={recipe.isPublic ? "default" : "outline"} className="text-xs whitespace-nowrap">
+                            {recipe.isPublic ? <Eye size={14} className="mr-1"/> : <EyeOff size={14} className="mr-1"/>}
+                            {recipe.isPublic ? "Public" : "Private"}
+                        </Badge>
+                    </div>
                     <CardDescription className="text-muted-foreground line-clamp-2 h-[2.5rem]">{recipe.description}</CardDescription>
                   </CardHeader>
                 </Link>
+                <CardContent className="pt-2 pb-4 px-4">
+                    <div className="flex items-center space-x-2">
+                        <Switch
+                            id={`publish-switch-${recipe.id}`}
+                            checked={recipe.isPublic}
+                            onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false)}
+                            aria-label={`Toggle ${recipe.title} visibility`}
+                        />
+                        <Label htmlFor={`publish-switch-${recipe.id}`} className="text-sm text-muted-foreground cursor-pointer">
+                            {recipe.isPublic ? "Published" : "Private"}
+                        </Label>
+                    </div>
+                </CardContent>
                 <CardFooter className="p-4 mt-auto flex gap-2">
                   <Link href={`/recipes/${recipe.id}/edit`} className="flex-1" legacyBehavior passHref>
                     <Button variant="outline" className="w-full group-hover:bg-primary/10 group-hover:border-primary group-hover:text-primary transition-colors">
@@ -222,7 +262,7 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-        ) : ( // Has recipes but search yields no results
+        ) : ( 
           <Card className="text-center p-10 animate-scale-in">
             <Search size={64} className="mx-auto text-muted-foreground mb-4" />
             <h3 className="text-2xl font-headline mb-2">No Recipes Found</h3>

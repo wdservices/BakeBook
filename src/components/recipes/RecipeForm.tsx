@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Recipe } from '@/types';
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import Spinner from '../ui/Spinner';
 import { addRecipe, updateRecipe as updateRecipeData } from '@/data/mockRecipes'; // Using mock data
 import { useEffect } from 'react';
+import { Switch } from '@/components/ui/switch';
 
 const ingredientSchema = z.object({
   name: z.string().min(1, "Ingredient name is required"),
@@ -37,6 +38,7 @@ export const recipeFormSchema = z.object({
   servings: z.coerce.number().min(1, "Servings must be at least 1"),
   ingredients: z.array(ingredientSchema).min(1, "At least one ingredient is required"),
   steps: z.array(stepSchema).min(1, "At least one step is required"),
+  isPublic: z.boolean().optional(),
 });
 
 type RecipeFormValues = z.infer<typeof recipeFormSchema>;
@@ -51,13 +53,14 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const { control, register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<RecipeFormValues>({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm<RecipeFormValues>({
     resolver: zodResolver(recipeFormSchema),
     defaultValues: initialData 
       ? {
           ...initialData,
-          ingredients: initialData.ingredients.map(({id: _id, ...rest}) => rest), // remove ID from form values
-          steps: initialData.steps.map(({id: _id, ...rest}) => rest), // remove ID from form values
+          ingredients: initialData.ingredients.map(({id: _id, ...rest}) => rest), 
+          steps: initialData.steps.map(({id: _id, ...rest}) => rest), 
+          isPublic: initialData.isPublic ?? false,
         }
       : {
           title: '',
@@ -68,6 +71,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           servings: 1,
           ingredients: [{ name: '', quantity: '' }],
           steps: [{ description: '' }],
+          isPublic: false, // Default new recipes to private
         },
   });
 
@@ -77,6 +81,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
         ...initialData,
         ingredients: initialData.ingredients.map(({id: _id, ...rest}) => rest),
         steps: initialData.steps.map(({id: _id, ...rest}) => rest),
+        isPublic: initialData.isPublic ?? false,
       });
     }
   }, [initialData, reset]);
@@ -90,12 +95,12 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 
     try {
       if (mode === 'create') {
-        // For mock data, IDs are auto-generated. Real app would need to handle this differently.
         const newRecipeData = {
           ...data,
           authorId: user.id,
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: `ing-${Date.now()}-${idx}` })),
           steps: data.steps.map((step, idx) => ({ ...step, id: `step-${Date.now()}-${idx}` })),
+          isPublic: data.isPublic ?? false,
         };
         const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
         toast({ title: "Baking Recipe Created!", description: `"${createdRecipe.title}" has been successfully added.` });
@@ -105,6 +110,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           ...data,
           ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: initialData.ingredients[idx]?.id || `ing-${Date.now()}-${idx}`})),
           steps: data.steps.map((step, idx) => ({ ...step, id: initialData.steps[idx]?.id || `step-${Date.now()}-${idx}`})),
+          isPublic: data.isPublic ?? false,
         }
         const updated = updateRecipeData(initialData.id, updatedRecipeData);
         if (updated) {
@@ -173,6 +179,32 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           <IngredientInput control={control} register={register} errors={errors} />
           <StepInput control={control} register={register} errors={errors} />
 
+          <div className="space-y-2">
+            <Label className="text-lg font-medium">Recipe Visibility</Label>
+            <div className="flex items-center space-x-3 p-3 border border-muted rounded-md bg-card/50">
+              <Controller
+                name="isPublic"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    id="isPublic"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-labelledby="isPublicLabel"
+                  />
+                )}
+              />
+              <Label htmlFor="isPublic" id="isPublicLabel" className="cursor-pointer flex-grow">
+                Make this recipe public?
+                <p className="text-xs text-muted-foreground">
+                  Public recipes are visible to everyone. Private recipes are only visible to you on your dashboard.
+                </p>
+              </Label>
+            </div>
+            {errors.isPublic && <p className="text-sm text-destructive">{errors.isPublic.message}</p>}
+          </div>
+
+
           <CardFooter className="p-0 pt-6">
             <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
               {isSubmitting ? <><Spinner size={18} className="mr-2"/> Processing...</> : (mode === 'create' ? 'Add Baking Recipe' : 'Save Changes')}
@@ -188,4 +220,3 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
 };
 
 export default RecipeForm;
-
