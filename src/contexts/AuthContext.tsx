@@ -8,7 +8,7 @@ import {
   onAuthStateChanged, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  updateProfile,
+  updateProfile as firebaseUpdateProfile, // Renamed to avoid conflict
   signOut as firebaseSignOut, 
   type User as FirebaseUser 
 } from 'firebase/auth';
@@ -18,6 +18,7 @@ import { UserRole } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import Spinner from '@/components/ui/Spinner';
 import type { SignUpFormValues, LoginFormValues } from '@/components/auth/AuthForm';
+import { addUserProfileToFirestore, getUserProfileFromFirestore } from '@/lib/firestoreService';
 
 interface AuthContextType {
   user: User | null;
@@ -38,23 +39,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
       if (firebaseUser) {
-        // For existing session, brandName & phoneNumber would ideally come from Firestore.
-        // For now, they are only set during the initial signup process for the current session.
-        // If a user logs in directly, these fields might be null unless fetched from a DB.
-        const existingBrandName = user?.id === firebaseUser.uid ? user.brandName : undefined;
-        const existingPhoneNumber = user?.id === firebaseUser.uid ? user.phoneNumber : undefined;
-
+        const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
         const appUser: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email,
-          name: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL, // Can be set later if profile editing is added
-          role: UserRole.USER, // Default role
-          brandName: existingBrandName, // Persisted from current session if available
-          phoneNumber: existingPhoneNumber, // Persisted from current session if available
+          name: firebaseUser.displayName || userProfile?.name,
+          photoURL: firebaseUser.photoURL || userProfile?.photoURL,
+          role: userProfile?.role || UserRole.USER, // Default role if not in Firestore
+          brandName: userProfile?.brandName,
+          phoneNumber: userProfile?.phoneNumber,
         };
         setUser(appUser);
       } else {
@@ -63,8 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // user dependency removed to avoid re-subscribing on local user state change
+  }, []);
 
   const signupWithEmailPassword = useCallback(async (data: SignUpFormValues): Promise<boolean> => {
     setLoading(true);
@@ -72,17 +67,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const firebaseUser = userCredential.user;
       
-      await updateProfile(firebaseUser, { displayName: data.name });
+      await firebaseUpdateProfile(firebaseUser, { displayName: data.name });
 
+      const profileData = {
+        email: data.email,
+        name: data.name,
+        brandName: data.brandName || null,
+        phoneNumber: data.phoneNumber || null,
+        role: UserRole.USER,
+        photoURL: firebaseUser.photoURL || null,
+      };
+      await addUserProfileToFirestore(firebaseUser.uid, profileData);
+      
       const appUser: User = {
         id: firebaseUser.uid,
-        email: firebaseUser.email,
-        name: data.name,
-        brandName: data.brandName,
-        phoneNumber: data.phoneNumber,
-        role: UserRole.USER,
+        ...profileData,
       };
-      setUser(appUser); // Set user in context with all details from form
+      setUser(appUser);
       
       toast({ title: "Account Created!", description: `Welcome, ${data.name}!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
@@ -101,11 +102,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      // onAuthStateChanged will handle setting the user state, including displayName.
-      // For brandName and phoneNumber, they are not stored in Firebase Auth.
-      // A proper solution would involve fetching these from Firestore upon login.
-      // For now, they will be missing if the user logs in directly without a previous session where they were set.
       const firebaseUser = userCredential.user;
+      
+      // User profile data will be fetched by onAuthStateChanged
       toast({ title: "Login Successful", description: `Welcome back, ${firebaseUser.displayName || firebaseUser.email}!` });
       
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
@@ -127,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       toast({ title: "Logged Out", description: "You have been successfully logged out." });
       router.push('/login');
-    } catch (error: any) {
+    } catch (error: any)
       console.error("Logout error:", error);
       toast({ title: "Logout Failed", description: error.message || "Could not log out.", variant: "destructive" });
     } finally {
@@ -138,14 +137,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
 
   const authPages = ['/login', '/signup'];
-  if (loading && !authPages.includes(pathname)) {
+  if (loading && !user && !authPages.includes(pathname)) { // Adjusted loading condition
     return (
       <div className="flex justify-center items-center min-h-screen bg-background">
         <Spinner size={48} />
       </div>
     );
   }
-
+  
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading }}>
       {children}

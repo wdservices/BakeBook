@@ -6,11 +6,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card'; // Ensure CardContent is imported
 import Spinner from '@/components/ui/Spinner';
 import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { Recipe } from '@/types';
-import { mockRecipes, deleteRecipe as deleteRecipeData, updateRecipe } from '@/data/mockRecipes';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-
+import { getUserRecipesFromFirestore, deleteRecipeFromFirestore, updateRecipeInFirestore } from '@/lib/firestoreService';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -45,27 +45,35 @@ export default function DashboardPage() {
       return;
     }
 
-    if (user) {
+    if (user?.id) {
       setLoadingRecipes(true);
-      // Simulate fetching user-specific recipes
-      // In a real app with Firebase, you'd query recipes where authorId === user.id
-      setTimeout(() => {
-        const filteredRecipes = mockRecipes.filter(recipe => recipe.authorId === user.id);
-        setUserRecipes(filteredRecipes);
-        setLoadingRecipes(false);
-      }, 300);
+      getUserRecipesFromFirestore(user.id)
+        .then(recipes => {
+          setUserRecipes(recipes);
+        })
+        .catch(error => {
+          console.error("Error fetching user recipes:", error);
+          toast({ title: "Error", description: "Could not load your recipes.", variant: "destructive" });
+        })
+        .finally(() => setLoadingRecipes(false));
+    } else if (isAuthenticated && !user?.id) {
+      // User is authenticated but user object or ID might still be loading
+      setLoadingRecipes(true); 
+    } else {
+       setLoadingRecipes(false); // Not authenticated or no user ID
     }
-  }, [isAuthenticated, authLoading, user, router]);
+  }, [isAuthenticated, authLoading, user, router, toast]);
 
-  const handleDeleteRecipe = (recipeId: string, recipeTitle: string) => {
-    const success = deleteRecipeData(recipeId);
-    if (success) {
+  const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
+    try {
+      await deleteRecipeFromFirestore(recipeId);
       setUserRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
       toast({
         title: "Recipe Deleted",
         description: `"${recipeTitle}" has been successfully deleted.`,
       });
-    } else {
+    } catch (error) {
+      console.error("Error deleting recipe:", error);
       toast({
         title: "Deletion Failed",
         description: `Could not delete "${recipeTitle}".`,
@@ -74,17 +82,18 @@ export default function DashboardPage() {
     }
   };
 
-  const handleTogglePublic = (recipeId: string, currentIsPublic: boolean) => {
-    const updatedRecipe = updateRecipe(recipeId, { isPublic: !currentIsPublic });
-    if (updatedRecipe) {
+  const handleTogglePublic = async (recipeId: string, currentIsPublic: boolean, recipeTitle: string) => {
+    try {
+      await updateRecipeInFirestore(recipeId, { isPublic: !currentIsPublic });
       setUserRecipes(prevRecipes =>
-        prevRecipes.map(r => (r.id === recipeId ? updatedRecipe : r))
+        prevRecipes.map(r => (r.id === recipeId ? { ...r, isPublic: !currentIsPublic, updatedAt: new Date().toISOString() } : r))
       );
       toast({
         title: "Recipe Visibility Updated",
-        description: `"${updatedRecipe.title}" is now ${updatedRecipe.isPublic ? "public" : "private"}.`,
+        description: `"${recipeTitle}" is now ${!currentIsPublic ? "public" : "private"}.`,
       });
-    } else {
+    } catch (error) {
+      console.error("Error updating recipe visibility:", error);
       toast({
         title: "Update Failed",
         description: "Could not update recipe visibility.",
@@ -113,7 +122,6 @@ export default function DashboardPage() {
     );
   }, [userRecipes, userRecipeSearchTerm]);
 
-
   if (authLoading || (!isAuthenticated && !authLoading)) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -124,7 +132,6 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    // This case should ideally be handled by the redirect above if !isAuthenticated
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
 
@@ -159,7 +166,7 @@ export default function DashboardPage() {
         />
          <DashboardCard
             title="Followers (Mock)"
-            value={"120"}
+            value={"120"} // This is still mock
             icon={Users}
         />
       </div>
@@ -223,7 +230,7 @@ export default function DashboardPage() {
                       <Switch
                           id={`publish-switch-${recipe.id}`}
                           checked={recipe.isPublic ?? false}
-                          onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false)}
+                          onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false, recipe.title)}
                           aria-label={`Toggle ${recipe.title} visibility`}
                       />
                       <Label htmlFor={`publish-switch-${recipe.id}`} className="text-xs text-muted-foreground cursor-pointer">

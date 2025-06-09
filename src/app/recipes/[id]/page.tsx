@@ -5,8 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getRecipeById } from '@/data/mockRecipes';
-import type { Recipe, Ingredient, RecipeStep } from '@/types';
+import type { Recipe } from '@/types';
 import { Clock, ChefHat, Edit3, ListChecks, CheckSquare, Square, ArrowLeft, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,7 +14,8 @@ import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-
+import { getRecipeByIdFromFirestore } from '@/lib/firestoreService';
+import { useToast } from '@/hooks/use-toast';
 
 export default function RecipePage({ params }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -24,35 +24,43 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     setLoading(true);
     const recipeId = params.id;
-    const fetchedRecipe = getRecipeById(recipeId);
-    if (fetchedRecipe) {
-      setRecipe(fetchedRecipe);
+    getRecipeByIdFromFirestore(recipeId)
+      .then(fetchedRecipe => {
+        if (fetchedRecipe) {
+          setRecipe(fetchedRecipe);
 
-      const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${recipeId}`);
-      if (storedCheckedIngredients) {
-        setCheckedIngredients(JSON.parse(storedCheckedIngredients));
-      } else {
-        const initialChecked: Record<string, boolean> = {};
-        fetchedRecipe.ingredients.forEach(ing => initialChecked[ing.id] = false);
-        setCheckedIngredients(initialChecked);
-      }
+          const storedCheckedIngredients = localStorage.getItem(`checkedIngredients_${recipeId}`);
+          if (storedCheckedIngredients) {
+            setCheckedIngredients(JSON.parse(storedCheckedIngredients));
+          } else {
+            const initialChecked: Record<string, boolean> = {};
+            fetchedRecipe.ingredients.forEach(ing => initialChecked[ing.id] = false);
+            setCheckedIngredients(initialChecked);
+          }
 
-      const storedCompletedSteps = localStorage.getItem(`completedSteps_${recipeId}`);
-      if (storedCompletedSteps) {
-        setCompletedSteps(JSON.parse(storedCompletedSteps));
-      } else {
-        const initialCompleted: Record<string, boolean> = {};
-        fetchedRecipe.steps.forEach(step => initialCompleted[step.id] = false);
-        setCompletedSteps(initialCompleted);
-      }
-
-    }
-    setLoading(false);
-  }, [params.id]);
+          const storedCompletedSteps = localStorage.getItem(`completedSteps_${recipeId}`);
+          if (storedCompletedSteps) {
+            setCompletedSteps(JSON.parse(storedCompletedSteps));
+          } else {
+            const initialCompleted: Record<string, boolean> = {};
+            fetchedRecipe.steps.forEach(step => initialCompleted[step.id] = false);
+            setCompletedSteps(initialCompleted);
+          }
+        } else {
+          toast({ title: "Not Found", description: "This baking recipe could not be found.", variant: "destructive" });
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching recipe:", error);
+        toast({ title: "Error", description: "Could not load the baking recipe.", variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [params.id, toast]);
 
   const handleIngredientToggle = (ingredientId: string) => {
     const recipeId = params.id;
@@ -75,7 +83,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   };
 
   const stepsProgress = useMemo(() => {
-    if (!recipe) return 0;
+    if (!recipe || !recipe.steps) return 0;
     const totalSteps = recipe.steps.length;
     if (totalSteps === 0) return 0;
     const doneSteps = Object.values(completedSteps).filter(Boolean).length;
@@ -90,7 +98,6 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     return <div className="text-center py-10 text-xl text-destructive">Baking recipe not found.</div>;
   }
 
-  // User can edit if they are the author. Admin edit logic removed for now.
   const canEdit = user && recipe && (user.id === recipe.authorId);
 
   return (
@@ -105,6 +112,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
               className="object-cover"
               data-ai-hint="baking recipe"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority // Prioritize loading for LCP
             />
           </div>
         )}
@@ -117,8 +125,8 @@ export default function RecipePage({ params }: { params: { id: string } }) {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <CardTitle className="text-4xl font-headline mb-2 md:mb-0 bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">{recipe.title}</CardTitle>
             {canEdit && (
-              <Link href={`/recipes/${recipe.id}/edit`}>
-                <Button variant="outline"><Edit3 className="mr-2 h-4 w-4" /> Edit Recipe</Button>
+              <Link href={`/recipes/${recipe.id}/edit`} legacyBehavior passHref>
+                <Button asChild variant="outline"><Edit3 className="mr-2 h-4 w-4" /> Edit Recipe</Button>
               </Link>
             )}
           </div>
@@ -128,7 +136,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
             <div className="flex items-center gap-1"><Clock size={16} /> Bake: {recipe.cookTime}</div>
             <div className="flex items-center gap-1">
                 {recipe.authorName ? <ChefHat size={16} /> : <UserCircle size={16} />}
-                By: {recipe.authorName || `User ${recipe.authorId.slice(0,6)}...`}
+                By: {recipe.authorName || `User...`}
             </div>
           </div>
         </CardHeader>
@@ -154,7 +162,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
 
           <div>
             <h2 className="text-2xl font-headline text-accent mb-2">Instructions</h2>
-            {recipe.steps.length > 0 && (
+            {recipe.steps?.length > 0 && (
               <div className="mb-4">
                 <Label htmlFor="stepsProgress" className="text-sm text-muted-foreground">Baking Progress</Label>
                 <Progress value={stepsProgress} id="stepsProgress" className="w-full h-3 mt-1" />
@@ -162,7 +170,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
               </div>
             )}
             <ol className="space-y-4 list-decimal list-inside">
-              {recipe.steps.map((step, index) => (
+              {recipe.steps?.map((step, index) => (
                 <li key={step.id} className="flex items-start gap-3 p-3 rounded hover:bg-muted transition-colors">
                    <button onClick={() => handleStepToggle(step.id)} className="mt-1 focus:outline-none">
                      {completedSteps[step.id] ? <CheckSquare size={20} className="text-primary flex-shrink-0" /> : <Square size={20} className="text-muted-foreground flex-shrink-0" />}

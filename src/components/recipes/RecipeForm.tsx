@@ -16,18 +16,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import Spinner from '../ui/Spinner';
-import { addRecipe, updateRecipe as updateRecipeData } from '@/data/mockRecipes'; // Using mock data
+import { addRecipeToFirestore, updateRecipeInFirestore } from '@/lib/firestoreService';
 import { useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 
 const ingredientSchema = z.object({
-  id: z.string().optional(), // Keep ID for existing items during edit
+  id: z.string().optional(),
   name: z.string().min(1, "Ingredient name is required"),
   quantity: z.string().min(1, "Quantity is required"),
 });
 
 const stepSchema = z.object({
-  id: z.string().optional(), // Keep ID for existing items during edit
+  id: z.string().optional(),
   description: z.string().min(10, "Step description must be at least 10 characters"),
 });
 
@@ -59,7 +59,6 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
     defaultValues: initialData
       ? {
           ...initialData,
-          // Ensure ingredients and steps retain their IDs for editing
           ingredients: initialData.ingredients.map(ing => ({ id: ing.id, name: ing.name, quantity: ing.quantity })),
           steps: initialData.steps.map(step => ({ id: step.id, description: step.description })),
           isPublic: initialData.isPublic ?? false,
@@ -72,7 +71,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           cookTime: '',
           ingredients: [{ name: '', quantity: '' }],
           steps: [{ description: '' }],
-          isPublic: false, // Default new recipes to private
+          isPublic: false,
         },
   });
 
@@ -96,44 +95,31 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
     }
 
     try {
+      // Ensure IDs for ingredients and steps are present or generated
+      const processedData = {
+        ...data,
+        ingredients: data.ingredients.map(ing => ({ ...ing, id: ing.id || crypto.randomUUID() })),
+        steps: data.steps.map(s => ({ ...s, id: s.id || crypto.randomUUID() })),
+        isPublic: data.isPublic ?? false,
+      };
+      
       if (mode === 'create') {
-        const newRecipeData = {
-          ...data,
-          authorId: user.id,
-          authorName: user.name || user.email,
-          // Ensure ingredients and steps get new IDs if not provided (should happen for new items)
-          ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: `ing-${Date.now()}-${idx}` })),
-          steps: data.steps.map((step, idx) => ({ ...step, id: `step-${Date.now()}-${idx}` })),
-          isPublic: data.isPublic ?? false,
-        };
-        // Cast to Omit Recipe 'id', 'createdAt', 'updatedAt'
-        const createdRecipe = addRecipe(newRecipeData as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
+        const createdRecipe = await addRecipeToFirestore(processedData, user.id, user.name || user.email);
         toast({ title: "Recipe Saved!", description: `"${createdRecipe.title}" has been successfully saved.` });
         router.push('/dashboard');
-      } else if (mode === 'edit' && initialData) {
-        const updatedRecipeData = {
-          ...data,
-          // IDs for ingredients/steps are handled by map in defaultValues/reset or should be part of 'data' if already existing
-          ingredients: data.ingredients.map((ing, idx) => ({ ...ing, id: ing.id || initialData.ingredients[idx]?.id || `ing-new-${Date.now()}-${idx}`})),
-          steps: data.steps.map((step, idx) => ({ ...step, id: step.id || initialData.steps[idx]?.id || `step-new-${Date.now()}-${idx}`})),
-          isPublic: data.isPublic ?? false,
-        }
-        // Cast to Partial<Omit<Recipe, 'id' | 'createdAt' | 'authorId' | 'authorName'>>
-        const updated = updateRecipeData(initialData.id, updatedRecipeData as Partial<Omit<Recipe, 'id' | 'createdAt' | 'authorId' | 'authorName'>>);
-        if (updated) {
-          toast({ title: "Recipe Updated!", description: `"${updated.title}" has been successfully updated.` });
-          router.push('/dashboard');
-        } else {
-           toast({ title: "Update Failed", description: "Could not update the baking recipe.", variant: "destructive" });
-        }
+      } else if (mode === 'edit' && initialData?.id) {
+        await updateRecipeInFirestore(initialData.id, processedData);
+        toast({ title: "Recipe Updated!", description: `"${data.title}" has been successfully updated.` });
+        router.push('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Recipe submission error:", error);
-      toast({ title: "Error", description: "An unexpected error occurred. Please try again.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "An unexpected error occurred. Please try again.", variant: "destructive" });
     }
   };
 
-  if (authLoading && !user) return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/> <p className="ml-4">Loading user...</p></div>;
+  if (authLoading && !user && mode === 'create') return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/> <p className="ml-4">Loading user...</p></div>;
+  if (authLoading && mode === 'edit' && !initialData) return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/> <p className="ml-4">Loading data...</p></div>;
 
 
   return (
@@ -143,7 +129,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           {mode === 'create' ? 'Add Your Baking Recipe' : 'Edit Your Baking Recipe'}
         </CardTitle>
         <CardDescription>
-          {mode === 'create' ? 'Share your baking masterpiece with the world!' : 'Make changes to your delicious baking recipe.'}
+          {mode === 'create' ? 'Share your baking masterpiece!' : 'Make changes to your delicious baking recipe.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -206,7 +192,6 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
             </div>
             {errors.isPublic && <p className="text-sm text-destructive">{errors.isPublic.message}</p>}
           </div>
-
 
           <CardFooter className="p-0 pt-6">
             <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>

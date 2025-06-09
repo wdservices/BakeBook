@@ -6,13 +6,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Spinner from '@/components/ui/Spinner';
-import { getRecipeById } from '@/data/mockRecipes';
 import type { Recipe } from '@/types';
-// UserRole removed as isAdmin logic is simplified for now
+import { getRecipeByIdFromFirestore } from '@/lib/firestoreService';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 export default function EditRecipePage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loadingRecipe, setLoadingRecipe] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -24,24 +26,30 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
       router.push(`/login?redirect=/recipes/${params.id}/edit`);
       return;
     }
+    
+    setLoadingRecipe(true);
+    getRecipeByIdFromFirestore(params.id)
+      .then(fetchedRecipe => {
+        if (fetchedRecipe) {
+          if (user && (fetchedRecipe.authorId === user.id)) {
+            setRecipe(fetchedRecipe);
+          } else {
+            setAccessDenied(true);
+            toast({ title: "Access Denied", description: "You do not have permission to edit this recipe.", variant: "destructive" });
+          }
+        } else {
+          setAccessDenied(true);
+          toast({ title: "Not Found", description: "This baking recipe could not be found.", variant: "destructive" });
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching recipe for edit:", error);
+        toast({ title: "Error", description: "Could not load the recipe for editing.", variant: "destructive" });
+        setAccessDenied(true); // Deny access on error as well
+      })
+      .finally(() => setLoadingRecipe(false));
 
-    const fetchedRecipe = getRecipeById(params.id);
-    if (fetchedRecipe) {
-      // For now, any authenticated user can edit any recipe if they know the ID.
-      // Or, we only allow the original author.
-      // The `user.role === UserRole.ADMIN` check is removed for now.
-      if (user && (fetchedRecipe.authorId === user.id)) {
-        setRecipe(fetchedRecipe);
-      } else {
-        // If not the author, deny access. Could add admin override later.
-        setAccessDenied(true);
-      }
-    } else {
-      // Recipe not found
-      setAccessDenied(true); // Or redirect to a 404 page
-    }
-    setLoadingRecipe(false);
-  }, [params.id, isAuthenticated, authLoading, user, router]);
+  }, [params.id, isAuthenticated, authLoading, user, router, toast]);
 
   if (authLoading || loadingRecipe) {
     return (
