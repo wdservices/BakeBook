@@ -104,8 +104,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const firebaseUser = userCredential.user;
       
-      // User profile data will be fetched by onAuthStateChanged
-      toast({ title: "Login Successful", description: `Welcome back, ${firebaseUser.displayName || firebaseUser.email}!` });
+      // User profile data will be fetched by onAuthStateChanged, including brandName, phoneNumber from Firestore
+      const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
+      const appUser: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || userProfile?.name,
+        photoURL: firebaseUser.photoURL || userProfile?.photoURL,
+        role: userProfile?.role || UserRole.USER,
+        brandName: userProfile?.brandName,
+        phoneNumber: userProfile?.phoneNumber,
+      };
+      setUser(appUser);
+
+      toast({ title: "Login Successful", description: `Welcome back, ${appUser.name || appUser.email}!` });
       
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       router.push(redirectPath || '/dashboard');
@@ -126,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       toast({ title: "Logged Out", description: "You have been successfully logged out." });
       router.push('/login');
-    } catch (error: any)
+    } catch (error: any) { // Added opening curly brace
       console.error("Logout error:", error);
       toast({ title: "Logout Failed", description: error.message || "Could not log out.", variant: "destructive" });
     } finally {
