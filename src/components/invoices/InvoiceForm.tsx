@@ -4,7 +4,8 @@
 import { useForm, type SubmitHandler, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Invoice, InvoiceLineItem, User } from '@/types';
+import type { Invoice, InvoiceLineItem, User, CurrencyCode } from '@/types';
+import { CURRENCIES } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -15,13 +16,17 @@ import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import Spinner from '@/components/ui/Spinner';
 // import { addInvoiceToFirestore } from '@/lib/firestoreService'; // We'll use this later
-import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Download } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Separator } from '../ui/separator';
-import { useEffect } from 'react'; // Added useEffect import
+import { useEffect, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 // Zod schema for a single line item
 const lineItemSchema = z.object({
@@ -43,6 +48,9 @@ export const invoiceFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   invoiceDate: z.date({ required_error: "Invoice date is required." }),
   dueDate: z.date().optional(),
+  currency: z.custom<CurrencyCode>((val) => Object.keys(CURRENCIES).includes(val as string), {
+    message: "Invalid currency selected",
+  }).default('USD'),
 
   // User details (will be pre-filled, but good to have in schema for structure)
   userBrandName: z.string().optional(),
@@ -82,12 +90,14 @@ const InvoiceForm = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const pdfContentRef = useRef<HTMLDivElement>(null);
 
-  const { control, register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<InvoiceFormValues>({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue, getValues } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       invoiceNumber: `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
       invoiceDate: new Date(),
+      currency: 'USD',
       userBrandName: user?.brandName || '',
       userPhoneNumber: user?.phoneNumber || '',
       userAddress: user?.address || '',
@@ -114,10 +124,12 @@ const InvoiceForm = () => {
     name: "lineItems",
   });
 
-  // Watch line items, tax rate, and discount to recalculate totals
   const watchedLineItems = watch("lineItems");
   const watchedTaxRate = watch("taxRate");
   const watchedDiscountAmount = watch("discountAmount");
+  const watchedCurrency = watch("currency");
+
+  const currentCurrencySymbol = CURRENCIES[watchedCurrency]?.symbol || '$';
 
   useEffect(() => {
     let sub = 0;
@@ -147,21 +159,21 @@ const InvoiceForm = () => {
     }
     // Placeholder for saving data
     console.log("Invoice Data to Save:", data);
-    toast({ title: "Invoice Submitted (Mock)", description: "Invoice data logged to console. PDF generation is next!" });
+    toast({ title: "Invoice Submitted (Mock)", description: "Invoice data logged to console. Firestore saving and PDF generation is next!" });
+    // Actual save logic will be:
     // try {
     //   const invoiceToSave = {
     //     ...data,
     //     invoiceDate: data.invoiceDate.toISOString(),
     //     dueDate: data.dueDate ? data.dueDate.toISOString() : null,
-    //     // Ensure all numbers are numbers
     //     subtotal: Number(data.subtotal) || 0,
-    //     taxRate: Number(data.taxRate) || null,
-    //     taxAmount: Number(data.taxAmount) || null,
-    //     discountAmount: Number(data.discountAmount) || null,
+    //     taxRate: data.taxRate === undefined ? null : Number(data.taxRate),
+    //     taxAmount: data.taxAmount === undefined ? null : Number(data.taxAmount),
+    //     discountAmount: data.discountAmount === undefined ? null : Number(data.discountAmount),
     //     grandTotal: Number(data.grandTotal) || 0,
     //     lineItems: data.lineItems.map(item => ({
     //         ...item,
-    //         id: item.id || crypto.randomUUID(),
+    //         id: item.id || crypto.randomUUID(), // Ensure ID for new items
     //         quantity: Number(item.quantity),
     //         unitPrice: Number(item.unitPrice),
     //         totalPrice: Number(item.totalPrice),
@@ -176,6 +188,56 @@ const InvoiceForm = () => {
     // }
   };
 
+  const handleDownloadPdf = async () => {
+    const invoiceContent = document.getElementById('invoice-pdf-content-wrapper');
+    if (!invoiceContent) {
+      toast({ title: "Error", description: "PDF content area not found.", variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Generating PDF...", description: "Please wait a moment." });
+
+    try {
+      const canvas = await html2canvas(invoiceContent, {
+        scale: 2, // Increase scale for better quality
+        useCORS: true, // If you have external images
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt', // points
+        format: 'a4', // A4 paper size
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      // Calculate the aspect ratio
+      const ratio = imgWidth / imgHeight;
+      let newImgWidth = pdfWidth - 40; // With some padding
+      let newImgHeight = newImgWidth / ratio;
+
+      // If the image is too tall, resize based on height instead
+      if (newImgHeight > pdfHeight - 40) {
+        newImgHeight = pdfHeight - 40;
+        newImgWidth = newImgHeight * ratio;
+      }
+      
+      const x = (pdfWidth - newImgWidth) / 2; // Center the image
+      const y = 20; // Top padding
+
+      pdf.addImage(imgData, 'PNG', x, y, newImgWidth, newImgHeight);
+      pdf.save(`invoice-${getValues('invoiceNumber') || 'download'}.pdf`);
+      toast({ title: "PDF Downloaded", description: "Invoice PDF has been generated." });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({ title: "PDF Error", description: "Could not generate PDF.", variant: "destructive" });
+    }
+  };
+
+
   if (authLoading && !user) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -183,8 +245,11 @@ const InvoiceForm = () => {
       </div>
     );
   }
+  
+  const formData = getValues(); // Get current form values for PDF rendering
 
   return (
+    <>
     <Card className="w-full max-w-4xl mx-auto shadow-xl animate-scale-in">
       <CardHeader>
         <CardTitle className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">
@@ -198,8 +263,8 @@ const InvoiceForm = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           
           {/* Invoice Meta */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="invoiceNumber">Invoice Number</Label>
               <Input id="invoiceNumber" {...register('invoiceNumber')} />
               {errors.invoiceNumber && <p className="text-sm text-destructive">{errors.invoiceNumber.message}</p>}
@@ -268,12 +333,34 @@ const InvoiceForm = () => {
               {errors.dueDate && <p className="text-sm text-destructive">{errors.dueDate.message}</p>}
             </div>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="currency">Currency</Label>
+            <Controller
+                name="currency"
+                control={control}
+                render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.entries(CURRENCIES).map(([code, { name, symbol }]) => (
+                        <SelectItem key={code} value={code}>
+                            {symbol} - {name} ({code})
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                )}
+            />
+            {errors.currency && <p className="text-sm text-destructive">{errors.currency.message}</p>}
+          </div>
+
 
           <Separator />
 
           {/* User and Recipient Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* User Details Section */}
             <div className="space-y-4 p-4 border rounded-md bg-card/30">
               <h3 className="text-lg font-medium text-primary">Your Information</h3>
               <div className="space-y-2">
@@ -296,7 +383,6 @@ const InvoiceForm = () => {
               </div>
             </div>
 
-            {/* Recipient Details Section */}
             <div className="space-y-4 p-4 border rounded-md">
               <h3 className="text-lg font-medium text-primary">Billed To</h3>
               <div className="space-y-2">
@@ -328,7 +414,6 @@ const InvoiceForm = () => {
           
           <Separator />
 
-          {/* Line Items Section */}
           <div>
             <h3 className="text-lg font-medium text-primary mb-2">Items / Services</h3>
             {fields.map((item, index) => (
@@ -355,7 +440,7 @@ const InvoiceForm = () => {
                    {errors.lineItems?.[index]?.quantity && <p className="text-xs text-destructive">{errors.lineItems[index]?.quantity?.message}</p>}
                 </div>
                 <div className="col-span-4 md:col-span-2 space-y-1">
-                  <Label htmlFor={`lineItems.${index}.unitPrice`}>Unit Price</Label>
+                  <Label htmlFor={`lineItems.${index}.unitPrice`}>Unit Price ({currentCurrencySymbol})</Label>
                   <Input
                     id={`lineItems.${index}.unitPrice`}
                     type="number"
@@ -367,7 +452,7 @@ const InvoiceForm = () => {
                   {errors.lineItems?.[index]?.unitPrice && <p className="text-xs text-destructive">{errors.lineItems[index]?.unitPrice?.message}</p>}
                 </div>
                  <div className="col-span-4 md:col-span-2 space-y-1">
-                  <Label>Total</Label>
+                  <Label>Total ({currentCurrencySymbol})</Label>
                   <Input value={Number(watch(`lineItems.${index}.totalPrice`) || 0).toFixed(2)} readOnly className="bg-muted/50 cursor-not-allowed" />
                 </div>
                 <div className="col-span-12 md:col-span-1 flex justify-end">
@@ -394,7 +479,6 @@ const InvoiceForm = () => {
 
           <Separator />
 
-            {/* Summary Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4 items-start">
                 <div className="md:col-span-2 space-y-2">
                     <Label htmlFor="notes">Notes / Terms (Optional)</Label>
@@ -403,7 +487,7 @@ const InvoiceForm = () => {
                 <div className="space-y-3 p-4 border rounded-md bg-card/30">
                     <div className="flex justify-between items-center">
                         <Label className="text-muted-foreground">Subtotal:</Label>
-                        <span className="font-medium">$&nbsp;{Number(watch('subtotal') || 0).toFixed(2)}</span>
+                        <span className="font-medium">{currentCurrencySymbol}&nbsp;{Number(watch('subtotal') || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center gap-2">
                         <Label htmlFor="taxRate" className="text-muted-foreground whitespace-nowrap">Tax (%):</Label>
@@ -411,35 +495,133 @@ const InvoiceForm = () => {
                     </div>
                     <div className="flex justify-between items-center">
                         <Label className="text-muted-foreground">Tax Amount:</Label>
-                        <span className="font-medium">$&nbsp;{Number(watch('taxAmount') || 0).toFixed(2)}</span>
+                        <span className="font-medium">{currentCurrencySymbol}&nbsp;{Number(watch('taxAmount') || 0).toFixed(2)}</span>
                     </div>
                      <div className="flex justify-between items-center gap-2">
-                        <Label htmlFor="discountAmount" className="text-muted-foreground">Discount ($):</Label>
+                        <Label htmlFor="discountAmount" className="text-muted-foreground">Discount ({currentCurrencySymbol}):</Label>
                         <Input id="discountAmount" type="number" step="0.01" placeholder="0.00" {...register('discountAmount')} className="h-8 max-w-[100px] text-right"/>
                     </div>
                     <Separator className="my-2"/>
                     <div className="flex justify-between items-center text-lg">
                         <Label className="font-semibold text-primary">Grand Total:</Label>
-                        <span className="font-bold text-primary">$&nbsp;{Number(watch('grandTotal') || 0).toFixed(2)}</span>
+                        <span className="font-bold text-primary">{currentCurrencySymbol}&nbsp;{Number(watch('grandTotal') || 0).toFixed(2)}</span>
                     </div>
                 </div>
             </div>
 
 
-          <CardFooter className="p-0 pt-8 flex justify-end">
-            <Button type="button" variant="outline" onClick={() => router.back()} className="mr-4">
+          <CardFooter className="p-0 pt-8 flex flex-col sm:flex-row justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto order-2 sm:order-1">
               Cancel
             </Button>
-            <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto order-1 sm:order-2" disabled={isSubmitting}>
               {isSubmitting ? <><Spinner size={18} className="mr-2"/> Processing...</> : 'Save Invoice (Draft)'}
+            </Button>
+             <Button type="button" onClick={handleDownloadPdf} className="w-full sm:w-auto order-3" variant="secondary">
+                <Download size={18} className="mr-2"/> Download PDF
             </Button>
           </CardFooter>
         </form>
       </CardContent>
     </Card>
+
+    {/* Hidden div for PDF generation content */}
+    <div id="invoice-pdf-content-wrapper" ref={pdfContentRef} className="fixed -left-[9999px] top-0 p-10 bg-white text-black w-[800px]" aria-hidden="true">
+        <style>{`
+            #invoice-pdf-content-wrapper { font-family: Arial, sans-serif; color: #333; }
+            .pdf-header { text-align: center; margin-bottom: 30px; }
+            .pdf-header h1 { font-size: 28px; color: #d95f43; margin-bottom: 5px; } /* Primary color approx */
+            .pdf-meta-table, .pdf-line-items-table, .pdf-summary-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+            .pdf-meta-table td, .pdf-line-items-table th, .pdf-line-items-table td, .pdf-summary-table td { padding: 8px; border: 1px solid #ddd; }
+            .pdf-line-items-table th { background-color: #f2f2f2; text-align: left; }
+            .pdf-user-recipient-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+            .pdf-user-recipient-grid div { padding: 10px; border: 1px solid #eee; }
+            .pdf-user-recipient-grid h3 { margin-top: 0; font-size: 16px; color: #d95f43; } /* Primary color approx */
+            .pdf-summary-table td:first-child { text-align: right; font-weight: bold; }
+            .pdf-footer { text-align: center; margin-top: 40px; font-size: 12px; color: #777; }
+            .pdf-text-right { text-align: right; }
+        `}</style>
+        <div className="pdf-header">
+            <h1>Invoice</h1>
+            <p>{formData.userBrandName || formData.userEmail || 'Your Business'}</p>
+        </div>
+
+        <table className="pdf-meta-table">
+            <tbody>
+                <tr><td>Invoice #:</td><td>{formData.invoiceNumber}</td></tr>
+                <tr><td>Date:</td><td>{formData.invoiceDate ? format(new Date(formData.invoiceDate), 'PPP') : ''}</td></tr>
+                {formData.dueDate && <tr><td>Due Date:</td><td>{format(new Date(formData.dueDate), 'PPP')}</td></tr>}
+            </tbody>
+        </table>
+        
+        <div className="pdf-user-recipient-grid">
+            <div>
+                <h3>From:</h3>
+                <p><strong>{formData.userBrandName || formData.name || formData.userEmail}</strong></p>
+                {formData.userAddress && <p>{formData.userAddress.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
+                {formData.userPhoneNumber && <p>Phone: {formData.userPhoneNumber}</p>}
+                {formData.userEmail && <p>Email: {formData.userEmail}</p>}
+            </div>
+            <div>
+                <h3>To:</h3>
+                <p><strong>{formData.recipientName}</strong></p>
+                {formData.recipientCompany && <p>{formData.recipientCompany}</p>}
+                {formData.recipientAddress && <p>{formData.recipientAddress.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
+                {formData.recipientPhone && <p>Phone: {formData.recipientPhone}</p>}
+                {formData.recipientEmail && <p>Email: {formData.recipientEmail}</p>}
+            </div>
+        </div>
+
+        <table className="pdf-line-items-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th className="pdf-text-right">Quantity</th>
+                    <th className="pdf-text-right">Unit Price ({CURRENCIES[formData.currency]?.symbol})</th>
+                    <th className="pdf-text-right">Total ({CURRENCIES[formData.currency]?.symbol})</th>
+                </tr>
+            </thead>
+            <tbody>
+                {formData.lineItems?.map(item => (
+                    <tr key={item.id || item.description}>
+                        <td>{item.description}</td>
+                        <td className="pdf-text-right">{item.quantity}</td>
+                        <td className="pdf-text-right">{Number(item.unitPrice).toFixed(2)}</td>
+                        <td className="pdf-text-right">{Number(item.totalPrice).toFixed(2)}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+
+        <table className="pdf-summary-table" style={{ width: '50%', marginLeft: 'auto' }}>
+            <tbody>
+                <tr><td>Subtotal:</td><td className="pdf-text-right">{CURRENCIES[formData.currency]?.symbol}{Number(formData.subtotal || 0).toFixed(2)}</td></tr>
+                {formData.taxRate !== undefined && formData.taxRate > 0 && (
+                    <>
+                    <tr><td>Tax ({formData.taxRate}%):</td><td className="pdf-text-right">{CURRENCIES[formData.currency]?.symbol}{Number(formData.taxAmount || 0).toFixed(2)}</td></tr>
+                    </>
+                )}
+                {formData.discountAmount !== undefined && formData.discountAmount > 0 && (
+                    <tr><td>Discount:</td><td className="pdf-text-right">-{CURRENCIES[formData.currency]?.symbol}{Number(formData.discountAmount || 0).toFixed(2)}</td></tr>
+                )}
+                <tr><td><strong>Grand Total:</strong></td><td className="pdf-text-right"><strong>{CURRENCIES[formData.currency]?.symbol}{Number(formData.grandTotal || 0).toFixed(2)}</strong></td></tr>
+            </tbody>
+        </table>
+
+        {formData.notes && (
+            <div style={{ marginTop: '20px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+                <h4>Notes:</h4>
+                <p>{formData.notes.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>
+            </div>
+        )}
+        
+        <div className="pdf-footer">
+            <p>Thank you for your business!</p>
+            <p>From BakeBook</p>
+        </div>
+    </div>
+    </>
   );
 };
 
 export default InvoiceForm;
-
-    

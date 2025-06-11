@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
@@ -53,6 +53,12 @@ export default function DashboardPage() {
 
   const { register: registerProfile, handleSubmit: handleSubmitProfile, formState: { errors: profileErrors, isSubmitting: isSubmittingProfile }, reset: resetProfileForm } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
+     defaultValues: { // Add default values
+      name: '',
+      brandName: '',
+      phoneNumber: '',
+      address: '',
+    }
   });
 
   useEffect(() => {
@@ -87,7 +93,7 @@ export default function DashboardPage() {
         })
         .finally(() => setLoadingRecipes(false));
     } else if (isAuthenticated && !user?.id) {
-      setLoadingRecipes(true); // Still waiting for user object to populate potentially
+      setLoadingRecipes(true); 
     } else {
        setLoadingRecipes(false);
     }
@@ -99,8 +105,15 @@ export default function DashboardPage() {
       return;
     }
     try {
-      await updateUserProfileFields(user.id, data);
-      await refreshUserProfile(); // Refresh user data in AuthContext
+      // Filter out empty strings to treat them as 'remove this field' or 'no change'
+      const updates: Partial<ProfileFormValues> = {};
+      if (data.name !== undefined) updates.name = data.name;
+      if (data.brandName !== undefined) updates.brandName = data.brandName;
+      if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
+      if (data.address !== undefined) updates.address = data.address;
+      
+      await updateUserProfileFields(user.id, updates);
+      await refreshUserProfile(); 
       toast({ title: "Profile Updated", description: "Your profile details have been saved." });
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -184,7 +197,6 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    // This case should ideally be covered by the loading and redirect logic above
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
 
@@ -220,7 +232,7 @@ export default function DashboardPage() {
         />
          <DashboardCard
             title="Followers (Mock)"
-            value={"120"} // Mock data
+            value={"120"} 
             icon={Users}
         />
         <DashboardCard
@@ -231,11 +243,10 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Profile Edit Section */}
       <Card className="animate-scale-in">
         <CardHeader>
           <CardTitle className="text-2xl font-headline text-primary">Your Profile Details</CardTitle>
-          <CardDescription>Update your brand name, contact information, and address.</CardDescription>
+          <CardDescription>Update your brand name, contact information, and address. Empty fields will not be changed.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmitProfile(handleProfileUpdateSubmit)} className="space-y-4">
@@ -272,7 +283,6 @@ export default function DashboardPage() {
       </Card>
 
 
-      {/* Recipes Section */}
       <div>
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Your Baking Recipes</h2>
@@ -320,13 +330,13 @@ export default function DashboardPage() {
                   </div>
                   <CardHeader className="p-3">
                     <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg font-headline group-hover:text-primary transition-colors">{recipe.title}</CardTitle>
+                        <CardTitle className="text-lg font-headline group-hover:text-primary transition-colors">{recipe.title || 'Untitled Recipe'}</CardTitle>
                         <Badge variant={recipe.isPublic ? "default" : "outline"} className="text-xs whitespace-nowrap ml-2">
                             {recipe.isPublic ? <Eye size={12} className="mr-1"/> : <EyeOff size={12} className="mr-1"/>}
                             {recipe.isPublic ? "Public" : "Private"}
                         </Badge>
                     </div>
-                     <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem] pt-1">{recipe.description}</p>
+                     <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem] pt-1">{recipe.description || 'No description available.'}</p>
                   </CardHeader>
                 </Link>
                 <CardFooter className="p-3 mt-auto flex justify-between items-center border-t border-border pt-3">
@@ -389,6 +399,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
-    
