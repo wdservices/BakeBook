@@ -21,6 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Separator } from '../ui/separator';
+import { useEffect } from 'react'; // Added useEffect import
 
 // Zod schema for a single line item
 const lineItemSchema = z.object({
@@ -146,7 +147,7 @@ const InvoiceForm = () => {
     }
     // Placeholder for saving data
     console.log("Invoice Data to Save:", data);
-    toast({ title: "Invoice Submitted (Mock)", description: "Invoice data logged to console." });
+    toast({ title: "Invoice Submitted (Mock)", description: "Invoice data logged to console. PDF generation is next!" });
     // try {
     //   const invoiceToSave = {
     //     ...data,
@@ -327,7 +328,7 @@ const InvoiceForm = () => {
           
           <Separator />
 
-          {/* Line Items Section - Placeholder for now */}
+          {/* Line Items Section */}
           <div>
             <h3 className="text-lg font-medium text-primary mb-2">Items / Services</h3>
             {fields.map((item, index) => (
@@ -440,3 +441,5 @@ const InvoiceForm = () => {
 };
 
 export default InvoiceForm;
+
+    
