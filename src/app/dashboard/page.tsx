@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image'; // Import next/image
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
@@ -31,6 +32,7 @@ import { getUserRecipesFromFirestore, deleteRecipeFromFirestore, updateRecipeInF
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { cn } from '@/lib/utils';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional().or(z.literal('')),
@@ -112,13 +114,13 @@ export default function DashboardPage() {
       setUserRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
       toast({
         title: "Recipe Deleted",
-        description: `"${recipeTitle}" has been successfully deleted.`,
+        description: `"${recipeTitle || 'Untitled Recipe'}" has been successfully deleted.`,
       });
     } catch (error) {
       console.error("Error deleting recipe:", error);
       toast({
         title: "Deletion Failed",
-        description: `Could not delete "${recipeTitle}".`,
+        description: `Could not delete "${recipeTitle || 'Untitled Recipe'}".`,
         variant: "destructive",
       });
     }
@@ -132,7 +134,7 @@ export default function DashboardPage() {
       );
       toast({
         title: "Recipe Visibility Updated",
-        description: `"${recipeTitle}" is now ${!currentIsPublic ? "public" : "private"}.`,
+        description: `"${recipeTitle || 'Untitled Recipe'}" is now ${!currentIsPublic ? "public" : "private"}.`,
       });
     } catch (error) {
       console.error("Error updating recipe visibility:", error);
@@ -307,10 +309,12 @@ export default function DashboardPage() {
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block flex-grow">
                   <div className="relative aspect-video w-full">
-                    <img
+                    <Image
                       src={recipe.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(recipe.title || 'Baked Good')}`}
-                      alt={recipe.title}
-                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                      alt={recipe.title || 'Recipe image'}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                       data-ai-hint="baked goods recipe"
                     />
                   </div>
@@ -330,8 +334,8 @@ export default function DashboardPage() {
                       <Switch
                           id={`publish-switch-${recipe.id}`}
                           checked={recipe.isPublic ?? false}
-                          onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false, recipe.title)}
-                          aria-label={`Toggle ${recipe.title} visibility`}
+                          onCheckedChange={() => handleTogglePublic(recipe.id, recipe.isPublic ?? false, recipe.title || 'Untitled Recipe')}
+                          aria-label={`Toggle ${recipe.title || 'Untitled Recipe'} visibility`}
                       />
                       <Label htmlFor={`publish-switch-${recipe.id}`} className="text-xs text-muted-foreground cursor-pointer">
                           {recipe.isPublic ? "Published" : "Private"}
@@ -354,13 +358,13 @@ export default function DashboardPage() {
                           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                           <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete your recipe
-                            "{recipe.title}".
+                            "{recipe.title || 'Untitled Recipe'}".
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handleDeleteRecipe(recipe.id, recipe.title)}
+                            onClick={() => handleDeleteRecipe(recipe.id, recipe.title || 'Untitled Recipe')}
                             className={buttonVariants({ variant: "destructive" })}
                           >
                             Yes, delete recipe
@@ -385,3 +389,6 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
+    
