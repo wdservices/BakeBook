@@ -4,13 +4,13 @@
 import type { ReactNode } from 'react';
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { 
-  onAuthStateChanged, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   updateProfile as firebaseUpdateProfile, // Renamed to avoid conflict
-  signOut as firebaseSignOut, 
-  type User as FirebaseUser 
+  signOut as firebaseSignOut,
+  type User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import type { User } from '@/types';
@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           role: userProfile?.role || UserRole.USER, // Default role if not in Firestore
           brandName: userProfile?.brandName,
           phoneNumber: userProfile?.phoneNumber,
+          address: userProfile?.address, // Load address
         };
         setUser(appUser);
       } else {
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const firebaseUser = userCredential.user;
-      
+
       await firebaseUpdateProfile(firebaseUser, { displayName: data.name });
 
       const profileData = {
@@ -74,17 +75,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         name: data.name,
         brandName: data.brandName || null,
         phoneNumber: data.phoneNumber || null,
+        address: data.address || null, // Save address
         role: UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
       await addUserProfileToFirestore(firebaseUser.uid, profileData);
-      
+
       const appUser: User = {
         id: firebaseUser.uid,
         ...profileData,
       };
       setUser(appUser);
-      
+
       toast({ title: "Account Created!", description: `Welcome, ${data.name}!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       router.push(redirectPath || '/dashboard');
@@ -103,8 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const firebaseUser = userCredential.user;
-      
-      // User profile data will be fetched by onAuthStateChanged, including brandName, phoneNumber from Firestore
+
+      // User profile data will be fetched by onAuthStateChanged, including brandName, phoneNumber, address from Firestore
       const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
       const appUser: User = {
         id: firebaseUser.uid,
@@ -114,11 +116,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role: userProfile?.role || UserRole.USER,
         brandName: userProfile?.brandName,
         phoneNumber: userProfile?.phoneNumber,
+        address: userProfile?.address, // Load address
       };
       setUser(appUser);
 
       toast({ title: "Login Successful", description: `Welcome back, ${appUser.name || appUser.email}!` });
-      
+
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       router.push(redirectPath || '/dashboard');
       return true;
@@ -138,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       toast({ title: "Logged Out", description: "You have been successfully logged out." });
       router.push('/login');
-    } catch (error: any) { // Added opening curly brace
+    } catch (error: any) {
       console.error("Logout error:", error);
       toast({ title: "Logout Failed", description: error.message || "Could not log out.", variant: "destructive" });
     } finally {
@@ -156,7 +159,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       </div>
     );
   }
-  
+
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading }}>
       {children}

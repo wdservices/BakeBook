@@ -6,10 +6,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CardContent } from '@/components/ui/card'; // Ensure CardContent is imported
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
-import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff } from 'lucide-react';
+import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff, FileText } from 'lucide-react';
 import type { Recipe } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -57,10 +56,9 @@ export default function DashboardPage() {
         })
         .finally(() => setLoadingRecipes(false));
     } else if (isAuthenticated && !user?.id) {
-      // User is authenticated but user object or ID might still be loading
-      setLoadingRecipes(true); 
+      setLoadingRecipes(true);
     } else {
-       setLoadingRecipes(false); // Not authenticated or no user ID
+       setLoadingRecipes(false);
     }
   }, [isAuthenticated, authLoading, user, router, toast]);
 
@@ -102,23 +100,31 @@ export default function DashboardPage() {
     }
   };
 
-  const DashboardCard = ({ title, value, icon: Icon }: { title: string | null; value: string | number | null; icon: React.ElementType; }) => (
-    <Card className="hover:shadow-lg transition-shadow duration-300 animate-scale-in">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="h-5 w-5 text-primary" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground truncate">{String(value)}</div>
-      </CardContent>
-    </Card>
-  );
+  const DashboardCard = ({ title, value, icon: Icon, link }: { title: string | null; value: string | number | null; icon: React.ElementType; link?: string }) => {
+    const cardContent = (
+        <Card className="hover:shadow-lg transition-shadow duration-300 animate-scale-in h-full flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+            <Icon className="h-5 w-5 text-primary" />
+        </CardHeader>
+        <CardContent className="flex-grow">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground truncate">{String(value)}</div>
+        </CardContent>
+        </Card>
+    );
+
+    if (link) {
+        return <Link href={link} className="block h-full">{cardContent}</Link>;
+    }
+    return cardContent;
+  };
+
 
   const searchedUserRecipes = useMemo(() => {
     if (!userRecipeSearchTerm) return userRecipes;
     return userRecipes.filter(recipe =>
       recipe.title.toLowerCase().includes(userRecipeSearchTerm.toLowerCase()) ||
-      recipe.description.toLowerCase().includes(userRecipeSearchTerm.toLowerCase())
+      (recipe.description && recipe.description.toLowerCase().includes(userRecipeSearchTerm.toLowerCase()))
     );
   }, [userRecipes, userRecipeSearchTerm]);
 
@@ -166,8 +172,14 @@ export default function DashboardPage() {
         />
          <DashboardCard
             title="Followers (Mock)"
-            value={"120"} // This is still mock
+            value={"120"}
             icon={Users}
+        />
+        <DashboardCard
+            title="Create Invoice"
+            value={"New"}
+            icon={FileText}
+            link="/dashboard/invoices/new"
         />
       </div>
 
@@ -205,7 +217,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {searchedUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
-                <Link href={`/recipes/${recipe.id}`} className="block">
+                <Link href={`/recipes/${recipe.id}`} className="block flex-grow">
                   <div className="relative aspect-video w-full">
                     <img
                       src={recipe.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(recipe.title || 'Baked Good')}`}
@@ -222,10 +234,12 @@ export default function DashboardPage() {
                             {recipe.isPublic ? "Public" : "Private"}
                         </Badge>
                     </div>
-                    <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-[2.25rem]">{recipe.description}</CardDescription>
+                    <CardContent className="p-0 pt-1">
+                      <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem]">{recipe.description}</p>
+                    </CardContent>
                   </CardHeader>
                 </Link>
-                <CardFooter className="p-3 mt-auto flex justify-between items-center">
+                <CardFooter className="p-3 mt-auto flex justify-between items-center border-t border-border pt-3">
                   <div className="flex items-center space-x-2">
                       <Switch
                           id={`publish-switch-${recipe.id}`}

@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import Spinner from '../ui/Spinner';
 import { LogIn, UserPlus } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -23,6 +24,7 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   brandName: z.string().optional(),
   phoneNumber: z.string().optional(),
+  address: z.string().optional(), // New address field
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
@@ -38,10 +40,10 @@ interface AuthFormProps {
 }
 
 const AuthForm = ({ mode }: AuthFormProps) => {
-  const { 
-    loginWithEmailPassword, 
-    signupWithEmailPassword, 
-    loading 
+  const {
+    loginWithEmailPassword,
+    signupWithEmailPassword,
+    loading
   } = useAuth();
 
   const currentSchema = mode === 'login' ? loginSchema : signupSchema;
@@ -54,6 +56,7 @@ const AuthForm = ({ mode }: AuthFormProps) => {
       email: '',
       brandName: '',
       phoneNumber: '',
+      address: '', // Default for address
       password: '',
       confirmPassword: '',
     } : {
@@ -100,6 +103,11 @@ const AuthForm = ({ mode }: AuthFormProps) => {
                   <Input id="phoneNumber" type="tel" {...register('phoneNumber')} placeholder="e.g. (555) 123-4567"/>
                   {errors.phoneNumber && <p className="text-sm text-destructive">{(errors.phoneNumber as any).message}</p>}
                 </div>
+                <div>
+                  <Label htmlFor="address">Address (Optional - for Invoices)</Label>
+                  <Textarea id="address" {...register('address')} placeholder="123 Main St, Anytown, USA" rows={3} />
+                  {errors.address && <p className="text-sm text-destructive">{(errors.address as any).message}</p>}
+                </div>
               </>
             )}
             <div>
@@ -131,14 +139,14 @@ const AuthForm = ({ mode }: AuthFormProps) => {
           </p>
           {mode === 'login' ? (
              <p className="text-sm text-muted-foreground">
-                Need an account? 
+                Need an account?
                 <Link href="/signup" className="ml-1 text-primary hover:underline">
                     Sign Up
                 </Link>
              </p>
           ) : (
              <p className="text-sm text-muted-foreground">
-                Already have an account? 
+                Already have an account?
                 <Link href="/login" className="ml-1 text-primary hover:underline">
                     Login
                 </Link>
