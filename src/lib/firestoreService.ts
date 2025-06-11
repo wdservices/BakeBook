@@ -47,24 +47,29 @@ export const addRecipeToFirestore = async (
     updatedAt: serverTimestamp(),
   };
   const docRef = await addDoc(recipeCollectionRef, newRecipeData);
-  return { 
+  return {
     ...recipeData,
     id: docRef.id,
     authorId,
     authorName: newRecipeData.authorName,
     isPublic: newRecipeData.isPublic,
     // These will be server timestamps, client representation will be strings
-    createdAt: new Date().toISOString(), 
+    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 };
 
 export const getUserRecipesFromFirestore = async (userId: string): Promise<Recipe[]> => {
+  console.log(`Fetching recipes for user ID: ${userId} from Firestore...`);
   const recipesCollectionRef = collection(db, 'recipes');
   const q = query(recipesCollectionRef, where('authorId', '==', userId), orderBy('updatedAt', 'desc'));
   const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) {
+    console.log(`No recipes found in Firestore for user ID: ${userId}.`);
+  }
   return querySnapshot.docs.map(docSnap => {
     const data = docSnap.data();
+    console.log(`Mapping recipe for user ${userId}: ${docSnap.id}`, data);
     return {
       id: docSnap.id,
       ...data,
@@ -79,13 +84,18 @@ export const getUserRecipesFromFirestore = async (userId: string): Promise<Recip
 };
 
 export const getPublicRecipesFromFirestore = async (count?: number): Promise<Recipe[]> => {
+  console.log("Fetching public recipes from Firestore...");
   const recipesCollectionRef = collection(db, 'recipes');
-  const q = count 
+  const q = count
     ? query(recipesCollectionRef, where('isPublic', '==', true), orderBy('updatedAt', 'desc'), limit(count))
     : query(recipesCollectionRef, where('isPublic', '==', true), orderBy('updatedAt', 'desc'));
   const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) {
+    console.log("No public recipes found in Firestore.");
+  }
   return querySnapshot.docs.map(docSnap => {
     const data = docSnap.data();
+    console.log(`Mapping public recipe: ${docSnap.id}`, data);
     return {
       id: docSnap.id,
       ...data,
@@ -99,10 +109,12 @@ export const getPublicRecipesFromFirestore = async (count?: number): Promise<Rec
 };
 
 export const getRecipeByIdFromFirestore = async (recipeId: string): Promise<Recipe | null> => {
+  console.log(`Fetching recipe by ID: ${recipeId} from Firestore...`);
   const recipeDocRef = doc(db, 'recipes', recipeId);
   const docSnap = await getDoc(recipeDocRef);
   if (docSnap.exists()) {
     const data = docSnap.data();
+    console.log(`Found recipe ${recipeId}:`, data);
     return {
       id: docSnap.id,
       ...data,
@@ -113,6 +125,7 @@ export const getRecipeByIdFromFirestore = async (recipeId: string): Promise<Reci
       isPublic: data.isPublic ?? false,
     } as Recipe;
   } else {
+    console.log(`Recipe with ID: ${recipeId} not found in Firestore.`);
     return null;
   }
 };
@@ -130,7 +143,7 @@ export const updateRecipeInFirestore = async (
   if (validatedUpdates.steps) {
     validatedUpdates.steps = validatedUpdates.steps.map(step => ({ ...step, id: step.id || doc(collection(db, '_')).id }));
   }
-  
+
   await updateDoc(recipeDocRef, {
     ...validatedUpdates,
     updatedAt: serverTimestamp(),
@@ -165,10 +178,12 @@ export const addUserProfileToFirestore = async (
 };
 
 export const getUserProfileFromFirestore = async (userId: string): Promise<Partial<User> | null> => {
+  console.log(`Fetching user profile for ID: ${userId} from Firestore...`);
   const userDocRef = doc(db, 'users', userId);
   const docSnap = await getDoc(userDocRef);
   if (docSnap.exists()) {
     const data = docSnap.data();
+    console.log(`Found user profile ${userId}:`, data);
     return {
       id: userId, // Add id to the returned object
       email: data.email,
@@ -180,6 +195,7 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
       // Timestamps can be added if needed for display, but often not directly on User object
     } as Partial<User>;
   } else {
+    console.log(`User profile with ID: ${userId} not found in Firestore.`);
     return null;
   }
 };
