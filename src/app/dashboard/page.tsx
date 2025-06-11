@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { getUserRecipesFromFirestore, deleteRecipeFromFirestore, updateRecipeInFirestore } from '@/lib/firestoreService';
+import { CardFooter } from '@/components/ui/card'; // Added CardFooter import
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -234,9 +235,8 @@ export default function DashboardPage() {
                             {recipe.isPublic ? "Public" : "Private"}
                         </Badge>
                     </div>
-                    <CardContent className="p-0 pt-1">
-                      <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem]">{recipe.description}</p>
-                    </CardContent>
+                     {/* Removed CardContent from here that only had the public/private switch */}
+                     <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem] pt-1">{recipe.description}</p>
                   </CardHeader>
                 </Link>
                 <CardFooter className="p-3 mt-auto flex justify-between items-center border-t border-border pt-3">

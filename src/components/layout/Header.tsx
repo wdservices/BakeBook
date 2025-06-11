@@ -67,7 +67,7 @@ const Header = () => {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[300px] p-0">
+              <SheetContent side="right" className="w-[240px] sm:w-[300px] p-0">
                 <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
                     <Link href="/" className="flex items-center gap-2 text-xl font-headline group transition-colors">
