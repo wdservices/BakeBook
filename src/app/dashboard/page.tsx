@@ -35,7 +35,7 @@ import * as z from 'zod';
 import { cn } from '@/lib/utils';
 
 const profileFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").optional().or(z.literal('')),
+  name: z.string().min(2, "Name must be at least 2 characters").optional(),
   brandName: z.string().optional(),
   phoneNumber: z.string().optional(),
   address: z.string().optional(),
@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   const { register: registerProfile, handleSubmit: handleSubmitProfile, formState: { errors: profileErrors, isSubmitting: isSubmittingProfile }, reset: resetProfileForm } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-     defaultValues: { // Add default values
+     defaultValues: {
       name: '',
       brandName: '',
       phoneNumber: '',
@@ -105,12 +105,13 @@ export default function DashboardPage() {
       return;
     }
     try {
-      // Filter out empty strings to treat them as 'remove this field' or 'no change'
-      const updates: Partial<ProfileFormValues> = {};
-      if (data.name !== undefined) updates.name = data.name;
-      if (data.brandName !== undefined) updates.brandName = data.brandName;
-      if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
-      if (data.address !== undefined) updates.address = data.address;
+      // Prepare updates, allowing empty strings to clear fields
+      const updates: Partial<ProfileFormValues> = {
+        name: data.name === undefined ? user.name : data.name, // Keep existing if undefined, otherwise use form value
+        brandName: data.brandName === undefined ? user.brandName : data.brandName,
+        phoneNumber: data.phoneNumber === undefined ? user.phoneNumber : data.phoneNumber,
+        address: data.address === undefined ? user.address : data.address,
+      };
       
       await updateUserProfileFields(user.id, updates);
       await refreshUserProfile(); 
@@ -399,3 +400,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

@@ -52,17 +52,17 @@ export const invoiceFormSchema = z.object({
     message: "Invalid currency selected",
   }).default('USD'),
 
-  // User details (will be pre-filled, but good to have in schema for structure)
+  // User details (will be pre-filled, but can be edited)
   userBrandName: z.string().optional(),
   userPhoneNumber: z.string().optional(),
   userAddress: z.string().optional(),
-  userEmail: z.string().email().optional(),
+  userEmail: z.string().email({message: "Invalid email for sender"}).optional().or(z.literal('')),
 
   // Recipient details
   recipientName: z.string().min(1, "Recipient name is required"),
   recipientCompany: z.string().optional(),
   recipientAddress: z.string().optional(),
-  recipientEmail: z.string().email({ message: "Invalid email format" }).optional().or(z.literal('')),
+  recipientEmail: z.string().email({ message: "Invalid email format for recipient" }).optional().or(z.literal('')),
   recipientPhone: z.string().optional(),
 
   lineItems: z.array(lineItemSchema).min(1, "At least one line item is required"),
@@ -152,9 +152,8 @@ const InvoiceForm = () => {
 
 
   const onSubmit: SubmitHandler<InvoiceFormValues> = async (data) => {
-    if (!user) {
-      toast({ title: "Authentication Error", description: "You must be logged in to create invoices.", variant: "destructive" });
-      router.push('/login?redirect=/dashboard/invoices/new');
+    if (!user && !data.userEmail) { // If not logged in, require manual email
+      toast({ title: "Sender Email Required", description: "Please enter your email address in the 'Your Information' section.", variant: "destructive" });
       return;
     }
     // Placeholder for saving data
@@ -164,6 +163,7 @@ const InvoiceForm = () => {
     // try {
     //   const invoiceToSave = {
     //     ...data,
+    //     authorId: user?.id || 'guest', // Handle guest invoices if needed
     //     invoiceDate: data.invoiceDate.toISOString(),
     //     dueDate: data.dueDate ? data.dueDate.toISOString() : null,
     //     subtotal: Number(data.subtotal) || 0,
@@ -239,11 +239,9 @@ const InvoiceForm = () => {
 
 
   if (authLoading && !user) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Spinner size={48}/> <p className="ml-4">Loading user...</p>
-      </div>
-    );
+    // Allow unauthenticated users to access the form, but they'll have to fill in their details.
+    // Spinner could be shown if there's a specific check for auth state that's slow,
+    // but generally, we want the form accessible.
   }
   
   const formData = getValues(); // Get current form values for PDF rendering
@@ -256,7 +254,7 @@ const InvoiceForm = () => {
           Create New Invoice
         </CardTitle>
         <CardDescription>
-          Fill in the details to generate a new invoice.
+          Fill in the details to generate a new invoice. Your details will be pre-filled if you are logged in.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -365,20 +363,24 @@ const InvoiceForm = () => {
               <h3 className="text-lg font-medium text-primary">Your Information</h3>
               <div className="space-y-2">
                 <Label htmlFor="userBrandName">Your Brand Name</Label>
-                <Input id="userBrandName" {...register('userBrandName')} readOnly className="bg-muted/50 cursor-not-allowed" />
+                <Input id="userBrandName" {...register('userBrandName')} placeholder="Your Bakery LLC"/>
+                {errors.userBrandName && <p className="text-sm text-destructive">{errors.userBrandName.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="userAddress">Your Address</Label>
-                <Textarea id="userAddress" {...register('userAddress')} readOnly className="bg-muted/50 cursor-not-allowed" rows={2}/>
+                <Textarea id="userAddress" {...register('userAddress')} placeholder="123 Your Street, Your City" rows={2}/>
+                {errors.userAddress && <p className="text-sm text-destructive">{errors.userAddress.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="userPhoneNumber">Your Phone</Label>
-                    <Input id="userPhoneNumber" {...register('userPhoneNumber')} readOnly className="bg-muted/50 cursor-not-allowed" />
+                    <Input id="userPhoneNumber" {...register('userPhoneNumber')} placeholder="(555) 555-5555"/>
+                    {errors.userPhoneNumber && <p className="text-sm text-destructive">{errors.userPhoneNumber.message}</p>}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="userEmail">Your Email</Label>
-                    <Input id="userEmail" {...register('userEmail')} readOnly className="bg-muted/50 cursor-not-allowed" />
+                    <Input id="userEmail" type="email" {...register('userEmail')} placeholder="you@example.com"/>
+                    {errors.userEmail && <p className="text-sm text-destructive">{errors.userEmail.message}</p>}
                 </div>
               </div>
             </div>
@@ -558,7 +560,7 @@ const InvoiceForm = () => {
             <div>
                 <h3>From:</h3>
                 <p><strong>{formData.userBrandName || formData.name || formData.userEmail}</strong></p>
-                {formData.userAddress && <p>{formData.userAddress.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
+                {formData.userAddress && <p>{formData.userAddress.split('\\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
                 {formData.userPhoneNumber && <p>Phone: {formData.userPhoneNumber}</p>}
                 {formData.userEmail && <p>Email: {formData.userEmail}</p>}
             </div>
@@ -566,7 +568,7 @@ const InvoiceForm = () => {
                 <h3>To:</h3>
                 <p><strong>{formData.recipientName}</strong></p>
                 {formData.recipientCompany && <p>{formData.recipientCompany}</p>}
-                {formData.recipientAddress && <p>{formData.recipientAddress.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
+                {formData.recipientAddress && <p>{formData.recipientAddress.split('\\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
                 {formData.recipientPhone && <p>Phone: {formData.recipientPhone}</p>}
                 {formData.recipientEmail && <p>Email: {formData.recipientEmail}</p>}
             </div>
@@ -611,7 +613,7 @@ const InvoiceForm = () => {
         {formData.notes && (
             <div style={{ marginTop: '20px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
                 <h4>Notes:</h4>
-                <p>{formData.notes.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>
+                <p>{formData.notes.split('\\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>
             </div>
         )}
         
@@ -625,3 +627,5 @@ const InvoiceForm = () => {
 };
 
 export default InvoiceForm;
+
+    
