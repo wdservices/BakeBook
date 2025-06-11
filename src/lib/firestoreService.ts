@@ -173,7 +173,7 @@ export const addUserProfileToFirestore = async (
     name: profileData.name || null,
     brandName: profileData.brandName || null,
     phoneNumber: profileData.phoneNumber || null,
-    address: profileData.address || null, // Include address
+    address: profileData.address || null,
     role: profileData.role,
     photoURL: profileData.photoURL || null,
     createdAt: serverTimestamp(),
@@ -195,7 +195,7 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
       name: data.name,
       brandName: data.brandName,
       phoneNumber: data.phoneNumber,
-      address: data.address, // Fetch address
+      address: data.address,
       role: data.role,
       photoURL: data.photoURL,
     } as Partial<User>;
@@ -204,6 +204,26 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
     return null;
   }
 };
+
+export const updateUserProfileFields = async (
+  userId: string,
+  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address'>>
+): Promise<void> => {
+  console.log(`Updating user profile fields for ID: ${userId} in Firestore with:`, data);
+  const userDocRef = doc(db, 'users', userId);
+  // Filter out undefined values to avoid overwriting fields with undefined
+  const updates = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+  if (Object.keys(updates).length === 0) {
+    console.log("No fields to update.");
+    return;
+  }
+  await updateDoc(userDocRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+  console.log(`User profile fields for ${userId} updated successfully.`);
+};
+
 
 // --- Invoice Functions (Placeholders for now) ---
 

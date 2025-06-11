@@ -6,10 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
-import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff, FileText } from 'lucide-react';
-import type { Recipe } from '@/types';
+import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff, FileText, Save } from 'lucide-react';
+import type { Recipe, User as AppUser } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -23,19 +23,47 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { getUserRecipesFromFirestore, deleteRecipeFromFirestore, updateRecipeInFirestore } from '@/lib/firestoreService';
-import { CardFooter } from '@/components/ui/card'; // Added CardFooter import
+import { getUserRecipesFromFirestore, deleteRecipeFromFirestore, updateRecipeInFirestore, updateUserProfileFields } from '@/lib/firestoreService';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const profileFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").optional().or(z.literal('')),
+  brandName: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  address: z.string().optional(),
+});
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [userRecipes, setUserRecipes] = useState<Recipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(true);
   const [userRecipeSearchTerm, setUserRecipeSearchTerm] = useState('');
+
+  const { register: registerProfile, handleSubmit: handleSubmitProfile, formState: { errors: profileErrors, isSubmitting: isSubmittingProfile }, reset: resetProfileForm } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+  });
+
+  useEffect(() => {
+    if (user) {
+      resetProfileForm({
+        name: user.name || '',
+        brandName: user.brandName || '',
+        phoneNumber: user.phoneNumber || '',
+        address: user.address || '',
+      });
+    }
+  }, [user, resetProfileForm]);
+
 
   useEffect(() => {
     if (authLoading) return;
@@ -57,11 +85,26 @@ export default function DashboardPage() {
         })
         .finally(() => setLoadingRecipes(false));
     } else if (isAuthenticated && !user?.id) {
-      setLoadingRecipes(true);
+      setLoadingRecipes(true); // Still waiting for user object to populate potentially
     } else {
        setLoadingRecipes(false);
     }
   }, [isAuthenticated, authLoading, user, router, toast]);
+
+  const handleProfileUpdateSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
+    if (!user?.id) {
+      toast({ title: "Error", description: "User not found.", variant: "destructive" });
+      return;
+    }
+    try {
+      await updateUserProfileFields(user.id, data);
+      await refreshUserProfile(); // Refresh user data in AuthContext
+      toast({ title: "Profile Updated", description: "Your profile details have been saved." });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({ title: "Update Failed", description: "Could not update your profile.", variant: "destructive" });
+    }
+  };
 
   const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
     try {
@@ -101,9 +144,9 @@ export default function DashboardPage() {
     }
   };
 
-  const DashboardCard = ({ title, value, icon: Icon, link }: { title: string | null; value: string | number | null; icon: React.ElementType; link?: string }) => {
+  const DashboardCard = ({ title, value, icon: Icon, link, className }: { title: string | null; value: string | number | null; icon: React.ElementType; link?: string, className?: string }) => {
     const cardContent = (
-        <Card className="hover:shadow-lg transition-shadow duration-300 animate-scale-in h-full flex flex-col">
+        <Card className={cn("hover:shadow-lg transition-shadow duration-300 animate-scale-in h-full flex flex-col", className)}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
             <Icon className="h-5 w-5 text-primary" />
@@ -139,6 +182,7 @@ export default function DashboardPage() {
   }
 
   if (!user) {
+    // This case should ideally be covered by the loading and redirect logic above
     return <div className="text-center py-10">Please log in to view your dashboard.</div>;
   }
 
@@ -170,10 +214,11 @@ export default function DashboardPage() {
             title="Account Email"
             value={user.email}
             icon={User}
+            className="truncate"
         />
          <DashboardCard
             title="Followers (Mock)"
-            value={"120"}
+            value={"120"} // Mock data
             icon={Users}
         />
         <DashboardCard
@@ -184,6 +229,48 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Profile Edit Section */}
+      <Card className="animate-scale-in">
+        <CardHeader>
+          <CardTitle className="text-2xl font-headline text-primary">Your Profile Details</CardTitle>
+          <CardDescription>Update your brand name, contact information, and address.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmitProfile(handleProfileUpdateSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="profileName">Your Name</Label>
+                <Input id="profileName" type="text" {...registerProfile('name')} placeholder="e.g., John Doe"/>
+                {profileErrors.name && <p className="text-sm text-destructive">{profileErrors.name.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="profileBrandName">Brand Name (Optional)</Label>
+                <Input id="profileBrandName" type="text" {...registerProfile('brandName')} placeholder="e.g., John's Bakery"/>
+                {profileErrors.brandName && <p className="text-sm text-destructive">{profileErrors.brandName.message}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="profilePhoneNumber">Phone Number (Optional)</Label>
+                <Input id="profilePhoneNumber" type="tel" {...registerProfile('phoneNumber')} placeholder="e.g., (555) 123-4567"/>
+                {profileErrors.phoneNumber && <p className="text-sm text-destructive">{profileErrors.phoneNumber.message}</p>}
+              </div>
+               <div>
+                <Label htmlFor="profileAddress">Address (Optional - For Invoices)</Label>
+                <Textarea id="profileAddress" {...registerProfile('address')} placeholder="123 Main St, Anytown, USA" rows={3}/>
+                {profileErrors.address && <p className="text-sm text-destructive">{profileErrors.address.message}</p>}
+              </div>
+            </div>
+            <Button type="submit" disabled={isSubmittingProfile}>
+              {isSubmittingProfile ? <Spinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
+              Save Profile Changes
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+
+      {/* Recipes Section */}
       <div>
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Your Baking Recipes</h2>
@@ -235,7 +322,6 @@ export default function DashboardPage() {
                             {recipe.isPublic ? "Public" : "Private"}
                         </Badge>
                     </div>
-                     {/* Removed CardContent from here that only had the public/private switch */}
                      <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem] pt-1">{recipe.description}</p>
                   </CardHeader>
                 </Link>

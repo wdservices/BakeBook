@@ -27,6 +27,7 @@ interface AuthContextType {
   loginWithEmailPassword: (data: LoginFormValues) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,29 +39,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const { toast } = useToast();
 
+  const fetchAndSetUser = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
+      const appUser: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || userProfile?.name,
+        photoURL: firebaseUser.photoURL || userProfile?.photoURL,
+        role: userProfile?.role || UserRole.USER,
+        brandName: userProfile?.brandName,
+        phoneNumber: userProfile?.phoneNumber,
+        address: userProfile?.address,
+      };
+      setUser(appUser);
+    } else {
+      setUser(null);
+    }
+  }, []);
+
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
-      if (firebaseUser) {
-        const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
-        const appUser: User = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email,
-          name: firebaseUser.displayName || userProfile?.name,
-          photoURL: firebaseUser.photoURL || userProfile?.photoURL,
-          role: userProfile?.role || UserRole.USER, // Default role if not in Firestore
-          brandName: userProfile?.brandName,
-          phoneNumber: userProfile?.phoneNumber,
-          address: userProfile?.address, // Load address
-        };
-        setUser(appUser);
-      } else {
-        setUser(null);
-      }
+      await fetchAndSetUser(firebaseUser);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [fetchAndSetUser]);
+
+  const refreshUserProfile = useCallback(async () => {
+    setLoading(true);
+    const currentFirebaseUser = auth.currentUser;
+    if (currentFirebaseUser) {
+      await fetchAndSetUser(currentFirebaseUser);
+    }
+    setLoading(false);
+  }, [fetchAndSetUser]);
 
   const signupWithEmailPassword = useCallback(async (data: SignUpFormValues): Promise<boolean> => {
     setLoading(true);
@@ -75,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         name: data.name,
         brandName: data.brandName || null,
         phoneNumber: data.phoneNumber || null,
-        address: data.address || null, // Save address
+        address: data.address || null,
         role: UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
@@ -104,24 +119,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      const firebaseUser = userCredential.user;
-
-      // User profile data will be fetched by onAuthStateChanged, including brandName, phoneNumber, address from Firestore
-      const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
-      const appUser: User = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email,
-        name: firebaseUser.displayName || userProfile?.name,
-        photoURL: firebaseUser.photoURL || userProfile?.photoURL,
-        role: userProfile?.role || UserRole.USER,
-        brandName: userProfile?.brandName,
-        phoneNumber: userProfile?.phoneNumber,
-        address: userProfile?.address, // Load address
-      };
-      setUser(appUser);
-
-      toast({ title: "Login Successful", description: `Welcome back, ${appUser.name || appUser.email}!` });
-
+      // onAuthStateChanged will handle fetching profile from Firestore
+      toast({ title: "Login Successful", description: `Welcome back!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       router.push(redirectPath || '/dashboard');
       return true;
@@ -152,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
 
   const authPages = ['/login', '/signup'];
-  if (loading && !user && !authPages.includes(pathname)) { // Adjusted loading condition
+  if (loading && !user && !authPages.includes(pathname)) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-background">
         <Spinner size={48} />
@@ -161,7 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading, refreshUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
