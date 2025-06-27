@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCndVPQOLSXFoUv6EuuWMWdOP1TRK9TvSU",
-  authDomain: "bakebook-auth.firebaseapp.com",
-  projectId: "bakebook-auth",
-  storageBucket: "bakebook-auth.firebasestorage.app",
-  messagingSenderId: "285359713592",
-  appId: "1:285359713592:web:858e22cfb9783068e625cd"
+    apiKey: "AIzaSyD2q75YOHN0A_FCWH2CVj7SFhEr4mi7sro",
+    authDomain: "bakebook-5c2bb.firebaseapp.com",
+    projectId: "bakebook-5c2bb",
+    storageBucket: "bakebook-5c2bb.firebasestorage.app",
+    messagingSenderId: "76104951819",
+    appId: "1:76104951819:web:500ddd43c79edd21187f0e"
 };
 
 // Initialize Firebase
