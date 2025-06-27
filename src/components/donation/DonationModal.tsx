@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -8,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,9 +55,11 @@ const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalP
              <Button type="button" onClick={onConfirmDonation}>
               I've already donated, thanks!
             </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Maybe Later
-            </Button>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Maybe Later
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
