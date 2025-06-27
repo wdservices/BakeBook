@@ -41,6 +41,8 @@ export type User = {
   address?: string | null; // New: User's address for invoices
   role: UserRole;
   photoURL?: string | null; // Firebase photoURL
+  lastDonationDate?: string | null;
+  lastPromptedDate?: string | null;
 };
 
 // New Types for Invoices

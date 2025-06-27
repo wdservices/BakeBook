@@ -178,6 +178,8 @@ export const addUserProfileToFirestore = async (
     photoURL: profileData.photoURL || null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+    lastDonationDate: null,
+    lastPromptedDate: null,
   };
   await setDoc(userDocRef, dataToSet, { merge: true });
 };
@@ -198,6 +200,8 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
       address: data.address,
       role: data.role,
       photoURL: data.photoURL,
+      lastDonationDate: data.lastDonationDate ? formatTimestamp(data.lastDonationDate) : null,
+      lastPromptedDate: data.lastPromptedDate ? formatTimestamp(data.lastPromptedDate) : null,
     } as Partial<User>;
   } else {
     console.log(`User profile with ID: ${userId} not found in Firestore.`);
@@ -207,7 +211,7 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
 
 export const updateUserProfileFields = async (
   userId: string,
-  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address'>>
+  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address' | 'lastDonationDate' | 'lastPromptedDate'>>
 ): Promise<void> => {
   console.log(`Updating user profile fields for ID: ${userId} in Firestore with:`, data);
   const userDocRef = doc(db, 'users', userId);

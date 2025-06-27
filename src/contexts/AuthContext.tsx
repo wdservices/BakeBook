@@ -18,7 +18,8 @@ import { UserRole } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import Spinner from '@/components/ui/Spinner';
 import type { SignUpFormValues, LoginFormValues } from '@/components/auth/AuthForm';
-import { addUserProfileToFirestore, getUserProfileFromFirestore } from '@/lib/firestoreService';
+import { addUserProfileToFirestore, getUserProfileFromFirestore, updateUserProfileFields } from '@/lib/firestoreService';
+import DonationModal from '@/components/donation/DonationModal';
 
 interface AuthContextType {
   user: User | null;
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDonationModalOpen, setDonationModalOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -51,6 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         brandName: userProfile?.brandName,
         phoneNumber: userProfile?.phoneNumber,
         address: userProfile?.address,
+        lastDonationDate: userProfile?.lastDonationDate,
+        lastPromptedDate: userProfile?.lastPromptedDate,
       };
       setUser(appUser);
     } else {
@@ -67,6 +71,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     return () => unsubscribe();
   }, [fetchAndSetUser]);
+
+  useEffect(() => {
+    if (user && user.id) { // Only run for logged-in users
+      const now = new Date();
+      const lastDonation = user.lastDonationDate ? new Date(user.lastDonationDate) : null;
+      const lastPrompt = user.lastPromptedDate ? new Date(user.lastPromptedDate) : null;
+
+      let shouldShow = false;
+
+      if (lastDonation) {
+        const daysSinceDonation = (now.getTime() - lastDonation.getTime()) / (1000 * 3600 * 24);
+        if (daysSinceDonation >= 31) {
+          shouldShow = true;
+        }
+      } else { // No donation ever
+        if (!lastPrompt) {
+          shouldShow = true; // First time ever seeing it
+        } else {
+          const daysSincePrompt = (now.getTime() - lastPrompt.getTime()) / (1000 * 3600 * 24);
+          if (daysSincePrompt >= 1) {
+            shouldShow = true;
+          }
+        }
+      }
+
+      if (shouldShow) {
+        setDonationModalOpen(true);
+        // Update last prompted date in Firestore
+        updateUserProfileFields(user.id, { lastPromptedDate: now.toISOString() });
+      }
+    }
+  }, [user]); // This runs whenever the user object changes (i.e., on login)
+
+  const handleConfirmDonation = async () => {
+    if (user && user.id) {
+      const now = new Date().toISOString();
+      await updateUserProfileFields(user.id, { lastDonationDate: now, lastPromptedDate: now });
+      await refreshUserProfile(); // To get the new dates into the user object
+      setDonationModalOpen(false);
+      toast({ title: "Thank you!", description: "Your support means the world to us." });
+    }
+  };
+
 
   const refreshUserProfile = useCallback(async () => {
     setLoading(true);
@@ -99,6 +146,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const appUser: User = {
         id: firebaseUser.uid,
         ...profileData,
+        lastDonationDate: null,
+        lastPromptedDate: null,
       };
       setUser(appUser);
 
@@ -162,6 +211,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading, refreshUserProfile }}>
       {children}
+      <DonationModal
+        open={isDonationModalOpen}
+        onOpenChange={setDonationModalOpen}
+        onConfirmDonation={handleConfirmDonation}
+      />
     </AuthContext.Provider>
   );
 };
