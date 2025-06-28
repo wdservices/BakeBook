@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Menu } from 'lucide-react';
+import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Menu, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,13 +29,11 @@ const Header = () => {
     const avatarAlt = user.name || user.email || 'User';
     const initials = user.name
       ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : user.email
-      ? user.email.substring(0, 2).toUpperCase()
-      : 'U';
+      : user.email?.substring(0, 2).toUpperCase() || 'U';
 
     if (!avatarSrc) {
       // Generate avatar from ui-avatars.com if no photoURL
-      const nameForAvatar = user.name || user.email;
+      const nameForAvatar = user.name || user.email || 'User';
       if (nameForAvatar) {
         avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=random&color=fff&size=64`;
       }
@@ -126,6 +124,10 @@ const Header = () => {
                     <DropdownMenuItem onClick={() => router.push('/recipes/new')}>
                          <PlusCircle className="mr-2 h-4 w-4" />
                           Create New Recipe
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/invoices/new')}>
+                         <FileText className="mr-2 h-4 w-4" />
+                          Create Invoice
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">

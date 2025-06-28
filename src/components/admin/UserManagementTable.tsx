@@ -1,3 +1,4 @@
+
 'use client';
 import type { User } from '@/types';
 import { UserRole } from '@/types';
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, UserCircle, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface UserManagementTableProps {
   users: User[];
@@ -67,7 +69,4 @@ const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) 
   );
 };
 
-// Re-import Card components because they might be shadowed
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 export default UserManagementTable;
-
