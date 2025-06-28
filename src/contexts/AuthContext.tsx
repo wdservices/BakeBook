@@ -72,45 +72,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [fetchAndSetUser]);
 
+  // FIX: Refactored donation logic to prevent infinite loops
   useEffect(() => {
-    if (user && user.id) { // Only run for logged-in users
+    if (user && user.id) {
       const now = new Date();
-      const lastDonation = user.lastDonationDate ? new Date(user.lastDonationDate) : null;
+      
       const lastPrompt = user.lastPromptedDate ? new Date(user.lastPromptedDate) : null;
+      // Exit early if a prompt was shown in the last 24 hours
+      if (lastPrompt && (now.getTime() - lastPrompt.getTime()) < 24 * 60 * 60 * 1000) {
+        return;
+      }
 
+      const lastDonation = user.lastDonationDate ? new Date(user.lastDonationDate) : null;
       let shouldShow = false;
 
-      if (lastDonation) {
+      if (!lastDonation) {
+        // No donation ever. Show prompt.
+        shouldShow = true;
+      } else {
+        // Has donated. Check if it was more than 31 days ago.
         const daysSinceDonation = (now.getTime() - lastDonation.getTime()) / (1000 * 3600 * 24);
         if (daysSinceDonation >= 31) {
           shouldShow = true;
-        }
-      } else { // No donation ever
-        if (!lastPrompt) {
-          shouldShow = true; // First time ever seeing it
-        } else {
-          const daysSincePrompt = (now.getTime() - lastPrompt.getTime()) / (1000 * 3600 * 24);
-          if (daysSincePrompt >= 1) {
-            shouldShow = true;
-          }
         }
       }
 
       if (shouldShow) {
         setDonationModalOpen(true);
-        // Update last prompted date in Firestore
-        updateUserProfileFields(user.id, { lastPromptedDate: now.toISOString() });
+        const nowIso = now.toISOString();
+        // Update Firestore for the last prompted date
+        updateUserProfileFields(user.id, { lastPromptedDate: nowIso });
+        // AND update local state immediately to prevent the effect from re-running in a loop
+        setUser(prevUser => prevUser ? { ...prevUser, lastPromptedDate: nowIso } : null);
       }
     }
-  }, [user]); // This runs whenever the user object changes (i.e., on login)
+  }, [user]);
 
+  // FIX: Refactored to update state locally without a full refresh to prevent loops
   const handleConfirmDonation = async () => {
     if (user && user.id) {
-      const now = new Date().toISOString();
-      await updateUserProfileFields(user.id, { lastDonationDate: now, lastPromptedDate: now });
-      await refreshUserProfile(); // To get the new dates into the user object
-      setDonationModalOpen(false);
-      toast({ title: "Thank you!", description: "Your support means the world to us." });
+      const nowIso = new Date().toISOString();
+      setDonationModalOpen(false); // Close modal first for better UX
+      try {
+        await updateUserProfileFields(user.id, { lastDonationDate: nowIso, lastPromptedDate: nowIso });
+        // Update local state directly to reflect the change immediately
+        setUser(prevUser => prevUser ? { ...prevUser, lastDonationDate: nowIso, lastPromptedDate: nowIso } : null);
+        toast({ title: "Thank you!", description: "Your support means the world to us." });
+      } catch (error) {
+        console.error("Failed to update donation date:", error);
+        toast({ title: "Update Failed", description: "Could not save your donation status. Please try again later.", variant: "destructive" });
+      }
     }
   };
 
