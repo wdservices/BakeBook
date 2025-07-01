@@ -35,7 +35,7 @@ const Header = () => {
       // Generate avatar from ui-avatars.com if no photoURL
       const nameForAvatar = user.name || user.email || 'User';
       if (nameForAvatar) {
-        avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=random&color=fff&size=64`;
+        avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&color=fff&size=64`;
       }
     }
 

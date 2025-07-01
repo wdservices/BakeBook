@@ -52,7 +52,7 @@ export default function BakersPage() {
             >
               <Avatar className="h-20 w-20 border-2 border-primary group-hover:border-[hsl(var(--blue))] transition-colors duration-300">
                 <AvatarImage 
-                  src={(baker.brandName || baker.name) ? `https://ui-avatars.com/api/?name=${encodeURIComponent(baker.brandName || baker.name || '')}&background=random&color=fff&size=128` : undefined} 
+                  src={(baker.brandName || baker.name) ? `https://ui-avatars.com/api/?name=${encodeURIComponent(baker.brandName || baker.name || '')}&color=fff&size=128` : undefined} 
                   alt={baker.brandName || baker.name || 'Baker'} 
                 />
                 <AvatarFallback className="text-2xl bg-muted">
