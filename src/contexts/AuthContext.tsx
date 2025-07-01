@@ -43,18 +43,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchAndSetUser = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
+      // DISABLED FIRESTORE: const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
       const appUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email,
-        name: firebaseUser.displayName || userProfile?.name,
-        photoURL: firebaseUser.photoURL || userProfile?.photoURL,
-        role: userProfile?.role || UserRole.USER,
-        brandName: userProfile?.brandName,
-        phoneNumber: userProfile?.phoneNumber,
-        address: userProfile?.address,
-        lastDonationDate: userProfile?.lastDonationDate,
-        lastPromptedDate: userProfile?.lastPromptedDate,
+        name: firebaseUser.displayName, // || userProfile?.name,
+        photoURL: firebaseUser.photoURL, // || userProfile?.photoURL,
+        role: UserRole.USER, // userProfile?.role || UserRole.USER,
+        // brandName: userProfile?.brandName,
+        // phoneNumber: userProfile?.phoneNumber,
+        // address: userProfile?.address,
+        // lastDonationDate: userProfile?.lastDonationDate,
+        // lastPromptedDate: userProfile?.lastPromptedDate,
       };
       setUser(appUser);
     } else {
@@ -72,13 +72,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [fetchAndSetUser]);
 
-  // FIX: Refactored donation logic to prevent infinite loops
+  // Donation logic is disabled as it relies on Firestore
+  /*
   useEffect(() => {
     if (user && user.id) {
       const now = new Date();
       
       const lastPrompt = user.lastPromptedDate ? new Date(user.lastPromptedDate) : null;
-      // Exit early if a prompt was shown in the last 24 hours
       if (lastPrompt && (now.getTime() - lastPrompt.getTime()) < 24 * 60 * 60 * 1000) {
         return;
       }
@@ -87,10 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       let shouldShow = false;
 
       if (!lastDonation) {
-        // No donation ever. Show prompt.
         shouldShow = true;
       } else {
-        // Has donated. Check if it was more than 31 days ago.
         const daysSinceDonation = (now.getTime() - lastDonation.getTime()) / (1000 * 3600 * 24);
         if (daysSinceDonation >= 31) {
           shouldShow = true;
@@ -100,28 +98,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (shouldShow) {
         setDonationModalOpen(true);
         const nowIso = now.toISOString();
-        // Update Firestore for the last prompted date
         updateUserProfileFields(user.id, { lastPromptedDate: nowIso });
-        // AND update local state immediately to prevent the effect from re-running in a loop
         setUser(prevUser => prevUser ? { ...prevUser, lastPromptedDate: nowIso } : null);
       }
     }
   }, [user]);
+  */
 
-  // FIX: Refactored to update state locally without a full refresh to prevent loops
   const handleConfirmDonation = async () => {
     if (user && user.id) {
-      const nowIso = new Date().toISOString();
-      setDonationModalOpen(false); // Close modal first for better UX
-      try {
-        await updateUserProfileFields(user.id, { lastDonationDate: nowIso, lastPromptedDate: nowIso });
-        // Update local state directly to reflect the change immediately
-        setUser(prevUser => prevUser ? { ...prevUser, lastDonationDate: nowIso, lastPromptedDate: nowIso } : null);
-        toast({ title: "Thank you!", description: "Your support means the world to us." });
-      } catch (error) {
-        console.error("Failed to update donation date:", error);
-        toast({ title: "Update Failed", description: "Could not save your donation status. Please try again later.", variant: "destructive" });
-      }
+      setDonationModalOpen(false);
+      // DISABLED FIRESTORE: Logic to update donation date is commented out
+      toast({ title: "Thank you!", description: "Your support means the world to us." });
     }
   };
 
@@ -152,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role: UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
-      await addUserProfileToFirestore(firebaseUser.uid, profileData);
+      // DISABLED FIRESTORE: await addUserProfileToFirestore(firebaseUser.uid, profileData);
 
       const appUser: User = {
         id: firebaseUser.uid,
@@ -178,8 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithEmailPassword = useCallback(async (data: LoginFormValues): Promise<boolean> => {
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      // onAuthStateChanged will handle fetching profile from Firestore
+      await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: "Login Successful", description: `Welcome back!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       router.push(redirectPath || '/dashboard');

@@ -9,6 +9,7 @@ import Spinner from '@/components/ui/Spinner';
 import { Search } from 'lucide-react';
 import { getPublicRecipesFromFirestore } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
+import { mockRecipes } from '@/data/mockRecipes'; // Using mock data for display
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -18,6 +19,11 @@ export default function RecipesPage() {
 
   useEffect(() => {
     setLoading(true);
+    // DISABLED FIRESTORE
+    console.log("Firestore is disabled. Recipe fetching is skipped.");
+    setRecipes(mockRecipes.filter(r => r.isPublic)); // Show public mock recipes
+    setLoading(false);
+    /*
     getPublicRecipesFromFirestore()
       .then(publicRecipes => {
         setRecipes(publicRecipes);
@@ -27,6 +33,7 @@ export default function RecipesPage() {
         toast({ title: "Error", description: "Could not load public recipes.", variant: "destructive" });
       })
       .finally(() => setLoading(false));
+    */
   }, [toast]);
 
   const filteredRecipes = useMemo(() => {
@@ -61,7 +68,7 @@ export default function RecipesPage() {
             <Search size={64} className="mx-auto text-muted-foreground mb-4" />
             <p className="text-xl text-muted-foreground mb-2">No public baking recipes found.</p>
             {searchTerm && <p className="text-sm text-muted-foreground">Try a different keyword or clear your search.</p>}
-            {!searchTerm && <p className="text-sm text-muted-foreground">Check back later for new public recipes.</p>}
+            {!searchTerm && <p className="text-sm text-muted-foreground">Check back later for new public recipes. (Firestore is disabled)</p>}
         </div>
       )}
     </div>

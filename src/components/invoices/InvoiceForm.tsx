@@ -15,7 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import Spinner from '@/components/ui/Spinner';
-// import { addInvoiceToFirestore } from '@/lib/firestoreService'; // We'll use this later
+import { addInvoiceToFirestore } from '@/lib/firestoreService';
 import { CalendarIcon, PlusCircle, Trash2, Download } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -156,36 +156,38 @@ const InvoiceForm = () => {
       toast({ title: "Sender Email Required", description: "Please enter your email address in the 'Your Information' section.", variant: "destructive" });
       return;
     }
-    // Placeholder for saving data
-    console.log("Invoice Data to Save:", data);
-    toast({ title: "Invoice Submitted (Mock)", description: "Invoice data logged to console. Firestore saving and PDF generation is next!" });
-    // Actual save logic will be:
-    // try {
-    //   const invoiceToSave = {
-    //     ...data,
-    //     authorId: user?.id || 'guest', // Handle guest invoices if needed
-    //     invoiceDate: data.invoiceDate.toISOString(),
-    //     dueDate: data.dueDate ? data.dueDate.toISOString() : null,
-    //     subtotal: Number(data.subtotal) || 0,
-    //     taxRate: data.taxRate === undefined ? null : Number(data.taxRate),
-    //     taxAmount: data.taxAmount === undefined ? null : Number(data.taxAmount),
-    //     discountAmount: data.discountAmount === undefined ? null : Number(data.discountAmount),
-    //     grandTotal: Number(data.grandTotal) || 0,
-    //     lineItems: data.lineItems.map(item => ({
-    //         ...item,
-    //         id: item.id || crypto.randomUUID(), // Ensure ID for new items
-    //         quantity: Number(item.quantity),
-    //         unitPrice: Number(item.unitPrice),
-    //         totalPrice: Number(item.totalPrice),
-    //     }))
-    //   };
-    //   await addInvoiceToFirestore(invoiceToSave, user.id);
-    //   toast({ title: "Invoice Saved!", description: `Invoice "${data.invoiceNumber}" has been successfully saved.` });
-    //   router.push('/dashboard'); // Or a page listing invoices
-    // } catch (error: any) {
-    //   console.error("Invoice submission error:", error);
-    //   toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
-    // }
+    // DISABLED FIRESTORE
+    console.log("Invoice Data to Save (Firestore Disabled):", data);
+    toast({ title: "Invoice Submitted (Locally)", description: "Firestore is disabled. Data logged to console." });
+    
+    /*
+    try {
+      const invoiceToSave = {
+        ...data,
+        authorId: user?.id || 'guest', // Handle guest invoices if needed
+        invoiceDate: data.invoiceDate.toISOString(),
+        dueDate: data.dueDate ? data.dueDate.toISOString() : null,
+        subtotal: Number(data.subtotal) || 0,
+        taxRate: data.taxRate === undefined ? null : Number(data.taxRate),
+        taxAmount: data.taxAmount === undefined ? null : Number(data.taxAmount),
+        discountAmount: data.discountAmount === undefined ? null : Number(data.discountAmount),
+        grandTotal: Number(data.grandTotal) || 0,
+        lineItems: data.lineItems.map(item => ({
+            ...item,
+            id: item.id || crypto.randomUUID(), // Ensure ID for new items
+            quantity: Number(item.quantity),
+            unitPrice: Number(item.unitPrice),
+            totalPrice: Number(item.totalPrice),
+        }))
+      };
+      await addInvoiceToFirestore(invoiceToSave, user.id);
+      toast({ title: "Invoice Saved!", description: `Invoice "${data.invoiceNumber}" has been successfully saved.` });
+      router.push('/dashboard'); // Or a page listing invoices
+    } catch (error: any) {
+      console.error("Invoice submission error:", error);
+      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
+    }
+    */
   };
 
   const handleDownloadPdf = async () => {
@@ -240,8 +242,6 @@ const InvoiceForm = () => {
 
   if (authLoading && !user) {
     // Allow unauthenticated users to access the form, but they'll have to fill in their details.
-    // Spinner could be shown if there's a specific check for auth state that's slow,
-    // but generally, we want the form accessible.
   }
   
   const formData = getValues(); // Get current form values for PDF rendering
@@ -559,7 +559,7 @@ const InvoiceForm = () => {
         <div className="pdf-user-recipient-grid">
             <div>
                 <h3>From:</h3>
-                <p><strong>{formData.userBrandName || formData.name || formData.userEmail}</strong></p>
+                <p><strong>{formData.userBrandName || (user?.name) || formData.userEmail}</strong></p>
                 {formData.userAddress && <p>{formData.userAddress.split('\\n').map((line, i) => <span key={i}>{line}<br/></span>)}</p>}
                 {formData.userPhoneNumber && <p>Phone: {formData.userPhoneNumber}</p>}
                 {formData.userEmail && <p>Email: {formData.userEmail}</p>}
@@ -584,8 +584,8 @@ const InvoiceForm = () => {
                 </tr>
             </thead>
             <tbody>
-                {formData.lineItems?.map(item => (
-                    <tr key={item.id || item.description}>
+                {formData.lineItems?.map((item, index) => (
+                    <tr key={index}>
                         <td>{item.description}</td>
                         <td className="pdf-text-right">{item.quantity}</td>
                         <td className="pdf-text-right">{Number(item.unitPrice).toFixed(2)}</td>
@@ -627,5 +627,3 @@ const InvoiceForm = () => {
 };
 
 export default InvoiceForm;
-
-    

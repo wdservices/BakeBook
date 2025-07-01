@@ -33,6 +33,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { cn } from '@/lib/utils';
+import { mockRecipes } from '@/data/mockRecipes'; // Using mock data for display
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
@@ -81,6 +82,14 @@ export default function DashboardPage() {
       return;
     }
 
+    // DISABLED FIRESTORE
+    setLoadingRecipes(true);
+    console.log("Firestore is disabled. Recipe fetching is skipped.");
+    // Example: You could load mock data here instead if you want to see something
+    // setUserRecipes(mockRecipes.filter(r => r.authorId === user?.id));
+    setUserRecipes([]); // Show empty state
+    setLoadingRecipes(false);
+    /*
     if (user?.id) {
       setLoadingRecipes(true);
       getUserRecipesFromFirestore(user.id)
@@ -97,6 +106,7 @@ export default function DashboardPage() {
     } else {
        setLoadingRecipes(false);
     }
+    */
   }, [isAuthenticated, authLoading, user, router, toast]);
 
   const handleProfileUpdateSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
@@ -104,10 +114,12 @@ export default function DashboardPage() {
       toast({ title: "Error", description: "User not found.", variant: "destructive" });
       return;
     }
+    // DISABLED FIRESTORE
+    toast({ title: "Profile Updated (Locally)", description: "Your profile details have been saved for this session. Firestore is disabled." });
+    /*
     try {
-      // Prepare updates, allowing empty strings to clear fields
       const updates: Partial<ProfileFormValues> = {
-        name: data.name === undefined ? user.name : data.name, // Keep existing if undefined, otherwise use form value
+        name: data.name === undefined ? user.name : data.name,
         brandName: data.brandName === undefined ? user.brandName : data.brandName,
         phoneNumber: data.phoneNumber === undefined ? user.phoneNumber : data.phoneNumber,
         address: data.address === undefined ? user.address : data.address,
@@ -120,9 +132,17 @@ export default function DashboardPage() {
       console.error("Error updating profile:", error);
       toast({ title: "Update Failed", description: "Could not update your profile.", variant: "destructive" });
     }
+    */
   };
 
   const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
+    // DISABLED FIRESTORE
+    setUserRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
+    toast({
+      title: "Recipe Deleted (Locally)",
+      description: `"${recipeTitle || 'Untitled Recipe'}" has been removed. Firestore is disabled.`,
+    });
+    /*
     try {
       await deleteRecipeFromFirestore(recipeId);
       setUserRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
@@ -138,9 +158,19 @@ export default function DashboardPage() {
         variant: "destructive",
       });
     }
+    */
   };
 
   const handleTogglePublic = async (recipeId: string, currentIsPublic: boolean, recipeTitle: string) => {
+    // DISABLED FIRESTORE
+    setUserRecipes(prevRecipes =>
+        prevRecipes.map(r => (r.id === recipeId ? { ...r, isPublic: !currentIsPublic } : r))
+    );
+    toast({
+        title: "Recipe Visibility Updated (Locally)",
+        description: `"${recipeTitle || 'Untitled Recipe'}" is now ${!currentIsPublic ? "public" : "private"}. Firestore is disabled.`,
+    });
+    /*
     try {
       await updateRecipeInFirestore(recipeId, { isPublic: !currentIsPublic });
       setUserRecipes(prevRecipes =>
@@ -158,6 +188,7 @@ export default function DashboardPage() {
         variant: "destructive",
       });
     }
+    */
   };
 
   const DashboardCard = ({ title, value, icon: Icon, link, className }: { title: string | null; value: string | number | null; icon: React.ElementType; link?: string, className?: string }) => {
@@ -307,7 +338,7 @@ export default function DashboardPage() {
           <Card className="text-center p-10 animate-scale-in">
             <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
             <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
-            <p className="text-muted-foreground mb-6">Start your baking journey by adding your first recipe.</p>
+            <p className="text-muted-foreground mb-6">Start your baking journey by adding your first recipe. (Firestore is currently disabled)</p>
             <Link href="/recipes/new" passHref>
               <Button size="lg">
                 <PlusCircle className="mr-2 h-5 w-5" /> Add Your First Baking Recipe
@@ -400,5 +431,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
