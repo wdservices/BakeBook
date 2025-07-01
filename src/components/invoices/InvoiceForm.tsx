@@ -203,6 +203,7 @@ const InvoiceForm = () => {
       const canvas = await html2canvas(invoiceContent, {
         scale: 2, // Increase scale for better quality
         useCORS: true, // If you have external images
+        backgroundColor: null, // Use the element's background
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -530,15 +531,21 @@ const InvoiceForm = () => {
     {/* Hidden div for PDF generation content */}
     <div id="invoice-pdf-content-wrapper" ref={pdfContentRef} className="fixed -left-[9999px] top-0 p-10 bg-white text-black w-[800px]" aria-hidden="true">
         <style>{`
-            #invoice-pdf-content-wrapper { font-family: Arial, sans-serif; color: #333; }
+            #invoice-pdf-content-wrapper { 
+                font-family: Arial, sans-serif; 
+                color: #333;
+                background-color: #ffffff;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24'%3e%3cg transform='rotate(15 12 12)'%3e%3cpath fill='none' stroke='rgba(0,0,0,0.04)' stroke-width='1.5' d='M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8 M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4 2 2.5 2 4 2 2-1 2-1 M2 21h20 M7 8v2 M12 8v2 M17 8v2 M7 4h.01 M12 4h.01 M17 4h.01'/%3e%3c/g%3e%3c/svg%3e");
+            }
             .pdf-header { text-align: center; margin-bottom: 30px; }
             .pdf-header h1 { font-size: 28px; color: #d95f43; margin-bottom: 5px; } /* Primary color approx */
             .pdf-meta-table, .pdf-line-items-table, .pdf-summary-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
-            .pdf-meta-table td, .pdf-line-items-table th, .pdf-line-items-table td, .pdf-summary-table td { padding: 8px; border: 1px solid #ddd; }
+            .pdf-meta-table td, .pdf-line-items-table th, .pdf-line-items-table td, .pdf-summary-table td { padding: 8px; border: 1px solid #ddd; background-color: #fff; }
             .pdf-line-items-table th { background-color: #f2f2f2; text-align: left; }
             .pdf-user-recipient-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-            .pdf-user-recipient-grid div { padding: 10px; border: 1px solid #eee; }
+            .pdf-user-recipient-grid div { padding: 10px; border: 1px solid #eee; background-color: #fff; border-radius: 4px; }
             .pdf-user-recipient-grid h3 { margin-top: 0; font-size: 16px; color: #d95f43; } /* Primary color approx */
+            .pdf-summary-table { background-color: #fff; }
             .pdf-summary-table td:first-child { text-align: right; font-weight: bold; }
             .pdf-footer { text-align: center; margin-top: 40px; font-size: 12px; color: #777; }
             .pdf-text-right { text-align: right; }
@@ -618,7 +625,7 @@ const InvoiceForm = () => {
         )}
         
         <div className="pdf-footer">
-            <p>Thank you for your business!</p>
+            <p>Thank you for your patronage.</p>
             <p>From BakeBook</p>
         </div>
     </div>
@@ -627,3 +634,5 @@ const InvoiceForm = () => {
 };
 
 export default InvoiceForm;
+
+    
