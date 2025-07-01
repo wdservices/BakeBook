@@ -103,7 +103,7 @@ const InvoiceForm = () => {
   const { control, register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue, getValues } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
-      invoiceNumber: `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+      invoiceNumber: '', // Set initial to empty to avoid hydration mismatch
       invoiceDate: new Date(),
       currency: 'USD',
       userBrandName: user?.brandName || '',
@@ -118,13 +118,19 @@ const InvoiceForm = () => {
   });
 
  useEffect(() => {
+    // Generate invoice number only on client-side after mount to avoid hydration mismatch
+    if (!getValues('invoiceNumber')) {
+        const newInvoiceNumber = `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+        setValue('invoiceNumber', newInvoiceNumber);
+    }
+    // Pre-fill user data
     if (user) {
       setValue('userBrandName', user.brandName || '');
       setValue('userPhoneNumber', user.phoneNumber || '');
       setValue('userAddress', user.address || '');
       setValue('userEmail', user.email || '');
     }
-  }, [user, setValue]);
+  }, [user, setValue, getValues]);
 
 
   const { fields, append, remove } = useFieldArray({
