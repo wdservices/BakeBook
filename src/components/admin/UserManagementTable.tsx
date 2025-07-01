@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, UserCircle, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from 'date-fns';
 
 interface UserManagementTableProps {
   users: User[];
@@ -32,7 +33,7 @@ const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) 
     <Card className="animate-fade-in">
       <CardHeader>
         <CardTitle className="text-2xl font-headline text-primary">User Management</CardTitle>
-        <CardDescription>View and manage user roles.</CardDescription>
+        <CardDescription>View and manage user roles and donations.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -41,6 +42,7 @@ const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) 
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Last Donation</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -54,6 +56,13 @@ const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) 
                     {user.role === UserRole.ADMIN ? <ShieldCheck size={14} /> : <UserCircle size={14} />}
                     {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {user.lastDonationAmount != null ? (
+                    `$${user.lastDonationAmount.toLocaleString()} on ${user.lastDonationDate ? format(new Date(user.lastDonationDate), 'PP') : 'N/A'}`
+                  ) : (
+                    <span className="text-muted-foreground">None</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="outline" size="sm" onClick={() => handleRoleToggle(user)}>

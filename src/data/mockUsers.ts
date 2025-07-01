@@ -8,6 +8,8 @@ export const mockUsers: User[] = [
     name: 'Regular User',
     brandName: 'User One Bakes',
     role: UserRole.USER,
+    lastDonationAmount: 20,
+    lastDonationDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
   },
   {
     id: 'admin1',
@@ -15,5 +17,7 @@ export const mockUsers: User[] = [
     name: 'Admin User',
     brandName: 'Admin Bakery Pro',
     role: UserRole.ADMIN,
+    lastDonationAmount: null,
+    lastDonationDate: null,
   },
 ];

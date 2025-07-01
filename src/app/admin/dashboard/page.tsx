@@ -8,7 +8,7 @@ import { mockUsers } from '@/data/mockUsers';
 import { mockRecipes } from '@/data/mockRecipes';
 import type { User } from '@/types';
 import { UserRole } from '@/types';
-import { Users, ChefHat, BarChart3 } from 'lucide-react';
+import { Users, ChefHat, BarChart3, DollarSign } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
 
 export default function AdminDashboardPage() {
@@ -40,6 +40,9 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const totalDonations = users.reduce((acc, user) => acc + (user.lastDonationAmount || 0), 0);
+  const donatingUsersCount = users.filter(u => u.lastDonationAmount && u.lastDonationAmount > 0).length;
+
   if (loading) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-300px)]"><Spinner size={48} /></div>;
   }
@@ -48,7 +51,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       <h1 className="text-4xl font-headline animate-fade-in bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Admin Dashboard</h1>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <DashboardStatsCard 
           title="Total Users" 
           value={users.length} 
@@ -60,6 +63,12 @@ export default function AdminDashboardPage() {
           value={recipesCount} 
           icon={ChefHat}
           description="Across all users"
+        />
+        <DashboardStatsCard 
+          title="Total Donations" 
+          value={`$${totalDonations.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+          icon={DollarSign}
+          description={`From ${donatingUsersCount} users`}
         />
         <DashboardStatsCard 
           title="Engagement (Mock)" 

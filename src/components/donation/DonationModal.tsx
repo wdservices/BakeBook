@@ -13,14 +13,23 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart } from 'lucide-react';
 import Script from 'next/script';
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface DonationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirmDonation: () => void;
+  onConfirmDonation: (amount?: number) => void;
 }
 
 const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalProps) => {
+  const [amount, setAmount] = useState<number | undefined>(5);
+
+  const handleConfirm = () => {
+    onConfirmDonation(amount);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,9 +60,21 @@ const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalP
             </TabsContent>
           </Tabs>
 
+          <div className="py-2 space-y-2 border-t pt-4">
+            <Label htmlFor="donation-amount" className="text-sm text-center block">Or, if you've already donated, confirm the amount ($)</Label>
+            <Input 
+              id="donation-amount"
+              type="number"
+              placeholder="e.g., 5"
+              value={amount === undefined ? '' : amount}
+              onChange={(e) => setAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
+              className="max-w-xs mx-auto"
+            />
+          </div>
+
           <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
-             <Button type="button" onClick={onConfirmDonation}>
-              I've already donated, thanks!
+             <Button type="button" onClick={handleConfirm}>
+              Confirm My Donation
             </Button>
             <DialogClose asChild>
               <Button type="button" variant="outline">

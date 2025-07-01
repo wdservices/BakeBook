@@ -43,6 +43,7 @@ export type User = {
   photoURL?: string | null; // Firebase photoURL
   lastDonationDate?: string | null;
   lastPromptedDate?: string | null;
+  lastDonationAmount?: number | null;
 };
 
 // New Types for Invoices

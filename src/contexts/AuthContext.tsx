@@ -20,6 +20,7 @@ import Spinner from '@/components/ui/Spinner';
 import type { SignUpFormValues, LoginFormValues } from '@/components/auth/AuthForm';
 import { addUserProfileToFirestore, getUserProfileFromFirestore, updateUserProfileFields } from '@/lib/firestoreService';
 import DonationModal from '@/components/donation/DonationModal';
+import { mockUsers } from '@/data/mockUsers';
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +30,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   refreshUserProfile: () => Promise<void>;
+  handleConfirmDonation: (amount?: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,22 +74,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [fetchAndSetUser]);
 
-  // Donation logic is disabled as it relies on Firestore
-  /*
   useEffect(() => {
-    if (user && user.id) {
-      // ...
-    }
-  }, [user]);
-  */
+    // Only run this check on the client after initial load and if user is logged in
+    // This is a mock implementation since Firestore is disabled
+    if (!loading && user) {
+        const hasDonatedInSession = sessionStorage.getItem(`donated_${user.id}`);
+        const hasBeenPromptedInSession = sessionStorage.getItem(`prompted_${user.id}`);
 
-  const handleConfirmDonation = async () => {
+        if (!hasDonatedInSession && !hasBeenPromptedInSession) {
+            console.log("Scheduling donation prompt.");
+            const timer = setTimeout(() => { // Delay it slightly so it doesn't feel instant
+                setDonationModalOpen(true);
+                sessionStorage.setItem(`prompted_${user.id}`, 'true');
+            }, 5000); // 5 second delay
+            return () => clearTimeout(timer);
+        }
+    }
+  }, [user, loading]);
+
+  const handleConfirmDonation = useCallback(async (amount?: number) => {
     if (user && user.id) {
       setDonationModalOpen(false);
-      // DISABLED FIRESTORE: Logic to update donation date is commented out
-      toast({ title: "Thank you!", description: "Your support means the world to us." });
+      const donationAmount = amount || 5; // Default amount if undefined
+      
+      const updatedUser: User = { 
+        ...user, 
+        lastDonationAmount: donationAmount, 
+        lastDonationDate: new Date().toISOString() 
+      };
+      setUser(updatedUser);
+
+      // Since firestore is disabled, we update the mock data array for the admin dashboard to see the change.
+      const userIndex = mockUsers.findIndex(u => u.id === user.id);
+      if (userIndex > -1) {
+          mockUsers[userIndex].lastDonationAmount = donationAmount;
+          mockUsers[userIndex].lastDonationDate = new Date().toISOString();
+      }
+
+      sessionStorage.setItem(`donated_${user.id}`, 'true');
+      toast({ title: "Thank you!", description: `Your support of $${donationAmount} means the world to us.` });
     }
-  };
+  }, [user, toast]);
 
 
   const refreshUserProfile = useCallback(async () => {
@@ -140,7 +167,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      // Explicitly set user state to avoid race condition with redirect
       await fetchAndSetUser(userCredential.user);
       
       toast({ title: "Login Successful", description: `Welcome back!` });
@@ -148,9 +174,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       router.push(redirectPath || '/dashboard');
       return true;
     } catch (error: any) {
-      console.error("Login error:", error);
-      toast({ title: "Login Failed", description: error.message || "Could not sign in.", variant: "destructive" });
-      return false;
+       console.error("Login error:", error);
+       toast({ title: "Login Failed", description: error.message || "Could not sign in.", variant: "destructive" });
+       return false;
     } finally {
       setLoading(false);
     }
@@ -183,7 +209,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading, refreshUserProfile }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading, refreshUserProfile, handleConfirmDonation }}>
       {children}
       <DonationModal
         open={isDonationModalOpen}
