@@ -86,6 +86,14 @@ export const invoiceFormSchema = z.object({
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
+const formatDisplayNumber = (num: number | undefined | null) => {
+  if (num === null || num === undefined) return '0.00';
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const InvoiceForm = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -137,16 +145,16 @@ const InvoiceForm = () => {
       const quantity = Number(item.quantity) || 0;
       const unitPrice = Number(item.unitPrice) || 0;
       const total = quantity * unitPrice;
-      setValue(`lineItems.${index}.totalPrice`, total, { shouldValidate: false });
+      setValue(`lineItems.${index}.totalPrice`, total, { shouldValidate: true });
       sub += total;
     });
-    setValue("subtotal", sub, { shouldValidate: false });
+    setValue("subtotal", sub, { shouldValidate: true });
 
     const tax = sub * (Number(watchedTaxRate || 0) / 100);
-    setValue("taxAmount", tax, { shouldValidate: false });
+    setValue("taxAmount", tax, { shouldValidate: true });
 
     const discount = Number(watchedDiscountAmount || 0);
-    setValue("grandTotal", sub + tax - discount, { shouldValidate: false });
+    setValue("grandTotal", sub + tax - discount, { shouldValidate: true });
 
   }, [watchedLineItems, watchedTaxRate, watchedDiscountAmount, setValue]);
 
@@ -456,7 +464,7 @@ const InvoiceForm = () => {
                 </div>
                  <div className="col-span-4 md:col-span-2 space-y-1">
                   <Label>Total ({currentCurrencySymbol})</Label>
-                  <Input value={Number(watch(`lineItems.${index}.totalPrice`) || 0).toFixed(2)} readOnly className="bg-muted/50 cursor-not-allowed" />
+                  <Input value={formatDisplayNumber(watch(`lineItems.${index}.totalPrice`))} readOnly className="bg-muted/50 cursor-not-allowed" />
                 </div>
                 <div className="col-span-12 md:col-span-1 flex justify-end">
                   {fields.length > 1 && (
@@ -490,7 +498,7 @@ const InvoiceForm = () => {
                 <div className="space-y-3 p-4 border rounded-md bg-card/30">
                     <div className="flex justify-between items-center">
                         <Label className="text-muted-foreground">Subtotal:</Label>
-                        <span className="font-medium">{currentCurrencySymbol}&nbsp;{Number(watch('subtotal') || 0).toFixed(2)}</span>
+                        <span className="font-medium">{currentCurrencySymbol}&nbsp;{formatDisplayNumber(watch('subtotal'))}</span>
                     </div>
                     <div className="flex justify-between items-center gap-2">
                         <Label htmlFor="taxRate" className="text-muted-foreground whitespace-nowrap">Tax (%):</Label>
@@ -498,7 +506,7 @@ const InvoiceForm = () => {
                     </div>
                     <div className="flex justify-between items-center">
                         <Label className="text-muted-foreground">Tax Amount:</Label>
-                        <span className="font-medium">{currentCurrencySymbol}&nbsp;{Number(watch('taxAmount') || 0).toFixed(2)}</span>
+                        <span className="font-medium">{currentCurrencySymbol}&nbsp;{formatDisplayNumber(watch('taxAmount'))}</span>
                     </div>
                      <div className="flex justify-between items-center gap-2">
                         <Label htmlFor="discountAmount" className="text-muted-foreground">Discount ({currentCurrencySymbol}):</Label>
@@ -507,7 +515,7 @@ const InvoiceForm = () => {
                     <Separator className="my-2"/>
                     <div className="flex justify-between items-center text-lg">
                         <Label className="font-semibold text-primary">Grand Total:</Label>
-                        <span className="font-bold text-primary">{currentCurrencySymbol}&nbsp;{Number(watch('grandTotal') || 0).toFixed(2)}</span>
+                        <span className="font-bold text-primary">{currentCurrencySymbol}&nbsp;{formatDisplayNumber(watch('grandTotal'))}</span>
                     </div>
                 </div>
             </div>
@@ -595,8 +603,8 @@ const InvoiceForm = () => {
                     <tr key={index}>
                         <td>{item.description}</td>
                         <td className="pdf-text-right">{item.quantity}</td>
-                        <td className="pdf-text-right">{Number(item.unitPrice).toFixed(2)}</td>
-                        <td className="pdf-text-right">{Number(item.totalPrice).toFixed(2)}</td>
+                        <td className="pdf-text-right">{Number(item.unitPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="pdf-text-right">{Number(item.totalPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                 ))}
             </tbody>
@@ -604,16 +612,16 @@ const InvoiceForm = () => {
 
         <table className="pdf-summary-table" style={{ width: '50%', marginLeft: 'auto' }}>
             <tbody>
-                <tr><td>Subtotal:</td><td className="pdf-text-right">{CURRENCIES[formData.currency]?.symbol}{Number(formData.subtotal || 0).toFixed(2)}</td></tr>
+                <tr><td>Subtotal:</td><td className="pdf-text-right">{CURRENCIES[formData.currency]?.symbol}{Number(formData.subtotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 {formData.taxRate !== undefined && formData.taxRate > 0 && (
                     <>
-                    <tr><td>Tax ({formData.taxRate}%):</td><td className="pdf-text-right">{CURRENCIES[formData.currency]?.symbol}{Number(formData.taxAmount || 0).toFixed(2)}</td></tr>
+                    <tr><td>Tax ({formData.taxRate}%):</td><td className="pdf-text-right">{CURRENCIES[formData.currency]?.symbol}{Number(formData.taxAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                     </>
                 )}
                 {formData.discountAmount !== undefined && formData.discountAmount > 0 && (
-                    <tr><td>Discount:</td><td className="pdf-text-right">-{CURRENCIES[formData.currency]?.symbol}{Number(formData.discountAmount || 0).toFixed(2)}</td></tr>
+                    <tr><td>Discount:</td><td className="pdf-text-right">-{CURRENCIES[formData.currency]?.symbol}{Number(formData.discountAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 )}
-                <tr><td><strong>Grand Total:</strong></td><td className="pdf-text-right"><strong>{CURRENCIES[formData.currency]?.symbol}{Number(formData.grandTotal || 0).toFixed(2)}</strong></td></tr>
+                <tr><td><strong>Grand Total:</strong></td><td className="pdf-text-right"><strong>{CURRENCIES[formData.currency]?.symbol}{Number(formData.grandTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td></tr>
             </tbody>
         </table>
 
@@ -634,5 +642,3 @@ const InvoiceForm = () => {
 };
 
 export default InvoiceForm;
-
-    
