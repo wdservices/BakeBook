@@ -1,4 +1,3 @@
-
 'use client';
 import type { User } from '@/types';
 import { UserRole } from '@/types';
@@ -9,6 +8,29 @@ import { ShieldCheck, UserCircle, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
+
+// New sub-component to safely render client-side specific formats
+const DonationDisplay = ({ user }: { user: User }) => {
+  const [displayText, setDisplayText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user.lastDonationAmount != null) {
+      const amount = `$${user.lastDonationAmount.toLocaleString()}`;
+      const date = user.lastDonationDate ? ` on ${format(new Date(user.lastDonationDate), 'PP')}` : '';
+      setDisplayText(`${amount}${date}`);
+    } else {
+      setDisplayText("None");
+    }
+  }, [user]);
+
+  if (displayText === "None") {
+    return <span className="text-muted-foreground">None</span>;
+  }
+  
+  // Render a placeholder or nothing during SSR and initial client render
+  return <>{displayText || '...'}</>;
+};
 
 interface UserManagementTableProps {
   users: User[];
@@ -58,11 +80,7 @@ const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) 
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {user.lastDonationAmount != null ? (
-                    `$${user.lastDonationAmount.toLocaleString()} on ${user.lastDonationDate ? format(new Date(user.lastDonationDate), 'PP') : 'N/A'}`
-                  ) : (
-                    <span className="text-muted-foreground">None</span>
-                  )}
+                  <DonationDisplay user={user} />
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="outline" size="sm" onClick={() => handleRoleToggle(user)}>
