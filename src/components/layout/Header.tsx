@@ -111,7 +111,7 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 p-1 rounded-full">
                       <UserAvatar />
-                      <span className="hidden md:inline text-sm">{user.brandName || user.name || user.email}</span>
+                      <span className="hidden md:inline text-sm">{user.brandName || user.name || user.email || 'User'}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

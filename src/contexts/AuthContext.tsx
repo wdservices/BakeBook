@@ -47,9 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const appUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email,
-        name: firebaseUser.displayName, // || userProfile?.name,
-        photoURL: firebaseUser.photoURL, // || userProfile?.photoURL,
-        role: UserRole.USER, // userProfile?.role || UserRole.USER,
+        name: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL,
+        role: UserRole.USER,
         // brandName: userProfile?.brandName,
         // phoneNumber: userProfile?.phoneNumber,
         // address: userProfile?.address,
@@ -76,31 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /*
   useEffect(() => {
     if (user && user.id) {
-      const now = new Date();
-      
-      const lastPrompt = user.lastPromptedDate ? new Date(user.lastPromptedDate) : null;
-      if (lastPrompt && (now.getTime() - lastPrompt.getTime()) < 24 * 60 * 60 * 1000) {
-        return;
-      }
-
-      const lastDonation = user.lastDonationDate ? new Date(user.lastDonationDate) : null;
-      let shouldShow = false;
-
-      if (!lastDonation) {
-        shouldShow = true;
-      } else {
-        const daysSinceDonation = (now.getTime() - lastDonation.getTime()) / (1000 * 3600 * 24);
-        if (daysSinceDonation >= 31) {
-          shouldShow = true;
-        }
-      }
-
-      if (shouldShow) {
-        setDonationModalOpen(true);
-        const nowIso = now.toISOString();
-        updateUserProfileFields(user.id, { lastPromptedDate: nowIso });
-        setUser(prevUser => prevUser ? { ...prevUser, lastPromptedDate: nowIso } : null);
-      }
+      // ...
     }
   }, [user]);
   */
@@ -134,9 +110,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const profileData = {
         email: data.email,
         name: data.name,
-        brandName: data.brandName || null,
-        phoneNumber: data.phoneNumber || null,
-        address: data.address || null,
+        brandName: data.brandName || undefined,
+        phoneNumber: data.phoneNumber || undefined,
+        address: data.address || undefined,
         role: UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
@@ -145,8 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const appUser: User = {
         id: firebaseUser.uid,
         ...profileData,
-        lastDonationDate: null,
-        lastPromptedDate: null,
       };
       setUser(appUser);
 
@@ -155,7 +129,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       router.push(redirectPath || '/dashboard');
       return true;
     } catch (error: any) {
-      console.error("Sign-up error:", error);
       toast({ title: "Sign-up Failed", description: error.message || "Could not create account.", variant: "destructive" });
       return false;
     } finally {
@@ -166,7 +139,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithEmailPassword = useCallback(async (data: LoginFormValues): Promise<boolean> => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      // Explicitly set user state to avoid race condition with redirect
+      await fetchAndSetUser(userCredential.user);
+      
       toast({ title: "Login Successful", description: `Welcome back!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       router.push(redirectPath || '/dashboard');
@@ -178,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [router, toast]);
+  }, [router, toast, fetchAndSetUser]);
 
   const logout = useCallback(async () => {
     setLoading(true);
