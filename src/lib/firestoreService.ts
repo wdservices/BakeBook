@@ -1,4 +1,5 @@
 
+
 'use server'; // Indirection if used by server components, but primarily client-side for now
 
 import { db } from '@/lib/firebase';
@@ -178,6 +179,7 @@ export const addUserProfileToFirestore = async (
     photoURL: profileData.photoURL || null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+    lastDonationAmount: null,
     lastDonationDate: null,
     lastPromptedDate: null,
   };
@@ -200,6 +202,7 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
       address: data.address,
       role: data.role,
       photoURL: data.photoURL,
+      lastDonationAmount: data.lastDonationAmount,
       lastDonationDate: data.lastDonationDate ? formatTimestamp(data.lastDonationDate) : null,
       lastPromptedDate: data.lastPromptedDate ? formatTimestamp(data.lastPromptedDate) : null,
     } as Partial<User>;
@@ -211,7 +214,7 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
 
 export const updateUserProfileFields = async (
   userId: string,
-  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address' | 'lastDonationDate' | 'lastPromptedDate'>>
+  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address' | 'lastDonationDate' | 'lastPromptedDate' | 'lastDonationAmount'>>
 ): Promise<void> => {
   console.log(`Updating user profile fields for ID: ${userId} in Firestore with:`, data);
   const userDocRef = doc(db, 'users', userId);
@@ -221,10 +224,12 @@ export const updateUserProfileFields = async (
     console.log("No fields to update.");
     return;
   }
-  await updateDoc(userDocRef, {
+  // Use setDoc with merge:true to create the document if it doesn't exist, or update it if it does.
+  // This prevents race conditions during sign-up.
+  await setDoc(userDocRef, {
     ...updates,
     updatedAt: serverTimestamp(),
-  });
+  }, { merge: true });
   console.log(`User profile fields for ${userId} updated successfully.`);
 };
 
