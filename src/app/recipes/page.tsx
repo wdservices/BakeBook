@@ -7,7 +7,7 @@ import RecipeSearchInput from '@/components/recipes/RecipeSearchInput';
 import type { Recipe } from '@/types';
 import Spinner from '@/components/ui/Spinner';
 import { Search } from 'lucide-react';
-import { getPublicRecipesFromFirestore } from '@/lib/firestoreService';
+import { mockRecipes } from '@/data/mockRecipes'; // Use mock data
 import { useToast } from '@/hooks/use-toast';
 
 export default function RecipesPage() {
@@ -18,22 +18,23 @@ export default function RecipesPage() {
 
   useEffect(() => {
     setLoading(true);
-    getPublicRecipesFromFirestore()
-      .then(publicRecipes => {
-        setRecipes(publicRecipes);
-      })
-      .catch(error => {
-        console.error("Error fetching public recipes:", error);
-        toast({ title: "Error", description: "Could not load public recipes.", variant: "destructive" });
-      })
-      .finally(() => setLoading(false));
+    // Simulate fetching by using mock data
+    try {
+      const publicRecipes = mockRecipes.filter(r => r.isPublic);
+      setRecipes(publicRecipes);
+    } catch (error) {
+       console.error("Error loading mock recipes:", error);
+       toast({ title: "Error", description: "Could not load recipes.", variant: "destructive" });
+    } finally {
+        setTimeout(() => setLoading(false), 300); // Simulate network delay
+    }
   }, [toast]);
 
   const filteredRecipes = useMemo(() => {
     if (!searchTerm) return recipes;
     return recipes.filter(recipe =>
       recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (recipe.description && recipe.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
       recipe.ingredients.some(ing => ing.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [recipes, searchTerm]);
