@@ -27,13 +27,22 @@ const Header = () => {
 
     let avatarSrc: string | undefined = user.photoURL || undefined;
     const avatarAlt = user.name || user.email || 'User';
-    const initials = user.name
-      ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : user.email?.substring(0, 2).toUpperCase() || 'U';
+    
+    // Safely generate initials
+    const getInitials = (name: string | null | undefined, email: string | null | undefined): string => {
+        if (name) {
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+        if (email) {
+            return email.substring(0, 2).toUpperCase();
+        }
+        return 'U'; // Default fallback
+    };
+    const initials = getInitials(user.name, user.email);
 
     if (!avatarSrc) {
       // Generate avatar from ui-avatars.com if no photoURL
-      const nameForAvatar = user.name || user.email || 'User';
+      const nameForAvatar = user.brandName || user.name || user.email || 'User';
       if (nameForAvatar) {
         avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&color=fff&size=64`;
       }
