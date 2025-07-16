@@ -34,11 +34,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head />
-      <body className={cn(
-        "font-body antialiased flex flex-col min-h-screen",
-        belleza.variable,
-        alegreya.variable
-      )}>
+      <body 
+        className={cn(
+          "font-body antialiased flex flex-col min-h-screen",
+          belleza.variable,
+          alegreya.variable
+        )}
+        suppressHydrationWarning={true}
+      >
         <AuthProvider>
           <Header />
           <main className="flex-grow container mx-auto px-4 py-8">
