@@ -94,12 +94,6 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
       return;
     }
 
-    // DISABLED FIRESTORE
-    console.log("Recipe data to be saved (Firestore Disabled):", data);
-    toast({ title: "Recipe Saved (Locally)", description: "Firestore is currently disabled. The recipe is not saved to the database." });
-    router.push('/dashboard');
-    return;
-    /*
     try {
       const processedData = {
         ...data,
@@ -121,7 +115,6 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
       console.error("Recipe submission error:", error);
       toast({ title: "Error", description: error.message || "An unexpected error occurred. Please try again.", variant: "destructive" });
     }
-    */
   };
 
   if (authLoading && !user && mode === 'create') return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Spinner size={48}/> <p className="ml-4">Loading user...</p></div>;

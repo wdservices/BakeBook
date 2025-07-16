@@ -16,7 +16,6 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { getRecipeByIdFromFirestore } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
-import { getRecipeById as getMockRecipeById } from '@/data/mockRecipes'; // Use mock data
 
 export default function RecipePage({ params }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -30,16 +29,6 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     setLoading(true);
     const recipeId = params.id;
-    // DISABLED FIRESTORE
-    console.log("Firestore is disabled. Using mock data for recipes.");
-    const mockRecipe = getMockRecipeById(recipeId);
-    if (mockRecipe) {
-        setRecipe(mockRecipe);
-    } else {
-        toast({ title: "Not Found", description: "This baking recipe could not be found.", variant: "destructive" });
-    }
-    setLoading(false);
-    /*
     getRecipeByIdFromFirestore(recipeId)
       .then(fetchedRecipe => {
         if (fetchedRecipe) {
@@ -71,7 +60,6 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         toast({ title: "Error", description: "Could not load the baking recipe.", variant: "destructive" });
       })
       .finally(() => setLoading(false));
-      */
   }, [params.id, toast]);
 
   const handleIngredientToggle = (ingredientId: string) => {
@@ -107,7 +95,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   }
 
   if (!recipe) {
-    return <div className="text-center py-10 text-xl text-destructive">Baking recipe not found. (Firestore is disabled)</div>;
+    return <div className="text-center py-10 text-xl text-destructive">Baking recipe not found.</div>;
   }
 
   const canEdit = user && recipe && (user.id === recipe.authorId);

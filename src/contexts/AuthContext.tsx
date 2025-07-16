@@ -20,7 +20,6 @@ import Spinner from '@/components/ui/Spinner';
 import type { SignUpFormValues, LoginFormValues } from '@/components/auth/AuthForm';
 import { addUserProfileToFirestore, getUserProfileFromFirestore, updateUserProfileFields } from '@/lib/firestoreService';
 import DonationModal from '@/components/donation/DonationModal';
-import { mockUsers } from '@/data/mockUsers';
 
 interface AuthContextType {
   user: User | null;
@@ -45,18 +44,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchAndSetUser = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      // DISABLED FIRESTORE: const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
+      const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
       const appUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email,
         name: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
-        role: UserRole.USER,
-        // brandName: userProfile?.brandName,
-        // phoneNumber: userProfile?.phoneNumber,
-        // address: userProfile?.address,
-        // lastDonationDate: userProfile?.lastDonationDate,
-        // lastPromptedDate: userProfile?.lastPromptedDate,
+        role: userProfile?.role || UserRole.USER,
+        brandName: userProfile?.brandName,
+        phoneNumber: userProfile?.phoneNumber,
+        address: userProfile?.address,
+        lastDonationAmount: userProfile?.lastDonationAmount,
+        lastDonationDate: userProfile?.lastDonationDate,
+        lastPromptedDate: userProfile?.lastPromptedDate,
       };
       setUser(appUser);
     } else {
@@ -76,16 +76,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Only run this check on the client after initial load and if user is logged in
-    // This is a mock implementation since Firestore is disabled
     if (!loading && user) {
-        const hasDonatedInSession = sessionStorage.getItem(`donated_${user.id}`);
-        const hasBeenPromptedInSession = sessionStorage.getItem(`prompted_${user.id}`);
+        const hasDonated = !!user.lastDonationDate;
+        const lastPrompted = user.lastPromptedDate ? new Date(user.lastPromptedDate) : null;
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        if (!hasDonatedInSession && !hasBeenPromptedInSession) {
+        // Prompt if they've never donated and haven't been prompted in the last week
+        if (!hasDonated && (!lastPrompted || lastPrompted < oneWeekAgo)) {
             console.log("Scheduling donation prompt.");
             const timer = setTimeout(() => { // Delay it slightly so it doesn't feel instant
                 setDonationModalOpen(true);
-                sessionStorage.setItem(`prompted_${user.id}`, 'true');
+                updateUserProfileFields(user.id, { lastPromptedDate: now.toISOString() });
             }, 5000); // 5 second delay
             return () => clearTimeout(timer);
         }
@@ -96,23 +98,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user && user.id) {
       setDonationModalOpen(false);
       const donationAmount = amount || 5; // Default amount if undefined
-      
-      const updatedUser: User = { 
-        ...user, 
-        lastDonationAmount: donationAmount, 
-        lastDonationDate: new Date().toISOString() 
-      };
-      setUser(updatedUser);
+      const donationDate = new Date().toISOString();
 
-      // Since firestore is disabled, we update the mock data array for the admin dashboard to see the change.
-      const userIndex = mockUsers.findIndex(u => u.id === user.id);
-      if (userIndex > -1) {
-          mockUsers[userIndex].lastDonationAmount = donationAmount;
-          mockUsers[userIndex].lastDonationDate = new Date().toISOString();
+      try {
+        await updateUserProfileFields(user.id, { 
+            lastDonationAmount: donationAmount, 
+            lastDonationDate: donationDate,
+        });
+
+        // Update local user state immediately for instant UI feedback
+        setUser(prevUser => prevUser ? { 
+          ...prevUser, 
+          lastDonationAmount: donationAmount, 
+          lastDonationDate: donationDate 
+        } : null);
+
+        toast({ title: "Thank you!", description: `Your support of $${donationAmount} means the world to us.` });
+      } catch (error) {
+        console.error("Failed to update donation status:", error);
+        toast({ title: "Update Failed", description: "Could not save donation status. Please try again.", variant: "destructive" });
       }
-
-      sessionStorage.setItem(`donated_${user.id}`, 'true');
-      toast({ title: "Thank you!", description: `Your support of $${donationAmount} means the world to us.` });
     }
   }, [user, toast]);
 
@@ -143,7 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role: UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
-      // DISABLED FIRESTORE: await addUserProfileToFirestore(firebaseUser.uid, profileData);
+      await addUserProfileToFirestore(firebaseUser.uid, profileData);
 
       const appUser: User = {
         id: firebaseUser.uid,

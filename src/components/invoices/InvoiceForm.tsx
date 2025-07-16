@@ -170,11 +170,7 @@ const InvoiceForm = () => {
       toast({ title: "Sender Email Required", description: "Please enter your email address in the 'Your Information' section.", variant: "destructive" });
       return;
     }
-    // DISABLED FIRESTORE
-    console.log("Invoice Data to Save (Firestore Disabled):", data);
-    toast({ title: "Invoice Submitted (Locally)", description: "Firestore is disabled. Data logged to console." });
     
-    /*
     try {
       const invoiceToSave = {
         ...data,
@@ -201,7 +197,6 @@ const InvoiceForm = () => {
       console.error("Invoice submission error:", error);
       toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     }
-    */
   };
 
   const handleDownloadPdf = async () => {
