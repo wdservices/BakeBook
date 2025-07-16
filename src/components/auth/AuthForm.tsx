@@ -11,8 +11,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import Spinner from '../ui/Spinner';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, MailQuestion } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useState } from 'react';
+
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -43,8 +56,12 @@ const AuthForm = ({ mode }: AuthFormProps) => {
   const {
     loginWithEmailPassword,
     signupWithEmailPassword,
+    sendPasswordReset,
     loading
   } = useAuth();
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+
 
   const currentSchema = mode === 'login' ? loginSchema : signupSchema;
   type CurrentFormValues = typeof mode extends 'login' ? LoginFormValues : SignUpFormValues;
@@ -71,6 +88,13 @@ const AuthForm = ({ mode }: AuthFormProps) => {
     } else {
       await signupWithEmailPassword(data as SignUpFormValues);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) return;
+    setIsResetting(true);
+    await sendPasswordReset(resetEmail);
+    setIsResetting(false);
   };
 
   return (
@@ -116,7 +140,41 @@ const AuthForm = ({ mode }: AuthFormProps) => {
               {errors.email && <p className="text-sm text-destructive">{(errors.email as any).message}</p>}
             </div>
             <div>
-              <Label htmlFor="password">Password</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password">Password</Label>
+                {mode === 'login' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button type="button" variant="link" className="text-xs p-0 h-auto">Forgot Password?</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2"><MailQuestion/> Reset Your Password</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Enter the email address associated with your account, and we'll send you a link to reset your password.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="py-2">
+                        <Label htmlFor="reset-email" className="sr-only">Email</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                        />
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePasswordReset} disabled={isResetting || !resetEmail}>
+                           {isResetting ? <Spinner size={20} className="mr-2"/> : null}
+                          Send Reset Link
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
               <Input id="password" type="password" {...register('password')} placeholder="••••••••" />
               {errors.password && <p className="text-sm text-destructive">{(errors.password as any).message}</p>}
             </div>

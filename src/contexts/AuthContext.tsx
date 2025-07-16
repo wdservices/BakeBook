@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   updateProfile as firebaseUpdateProfile, // Renamed to avoid conflict
   signOut as firebaseSignOut,
   type User as FirebaseUser
@@ -26,6 +27,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signupWithEmailPassword: (data: SignUpFormValues) => Promise<boolean>;
   loginWithEmailPassword: (data: LoginFormValues) => Promise<boolean>;
+  sendPasswordReset: (email: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
   refreshUserProfile: () => Promise<void>;
@@ -186,6 +188,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   }, [router, toast, fetchAndSetUser]);
+  
+  const sendPasswordReset = useCallback(async (email: string) => {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        toast({
+            title: "Password Reset Email Sent",
+            description: "Please check your inbox for a link to reset your password.",
+        });
+    } catch (error: any) {
+        console.error("Password reset error:", error);
+        toast({
+            title: "Password Reset Failed",
+            description: error.message || "Could not send reset email. Please try again.",
+            variant: "destructive",
+        });
+    }
+  }, [toast]);
 
   const logout = useCallback(async () => {
     setLoading(true);
@@ -214,7 +233,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, logout, loading, refreshUserProfile, handleConfirmDonation }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, sendPasswordReset, logout, loading, refreshUserProfile, handleConfirmDonation }}>
       {children}
       <DonationModal
         open={isDonationModalOpen}
