@@ -4,29 +4,41 @@
 import { useState, useEffect } from 'react';
 import DashboardStatsCard from '@/components/admin/DashboardStatsCard';
 import UserManagementTable from '@/components/admin/UserManagementTable';
-import RecipeManagementTable from '@/components/admin/RecipeManagementTable'; // New Component
+import RecipeManagementTable from '@/components/admin/RecipeManagementTable';
 import { mockUsers } from '@/data/mockUsers';
-import { mockRecipes } from '@/data/mockRecipes';
 import type { User, Recipe } from '@/types';
 import { UserRole } from '@/types';
 import { Users, ChefHat, BarChart3, DollarSign } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/hooks/use-toast';
+import { getAllRecipesFromFirestore, deleteRecipeFromFirestore } from '@/lib/firestoreService';
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<User[]>(mockUsers);
-  const [recipes, setRecipes] = useState<Recipe[]>(mockRecipes);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     setLoading(true);
-    setTimeout(() => {
-      setUsers(mockUsers);
-      setRecipes(mockRecipes);
-      setLoading(false);
-    }, 500);
-  }, []);
+    const fetchData = async () => {
+      try {
+        const allRecipes = await getAllRecipesFromFirestore();
+        setRecipes(allRecipes);
+        setUsers(mockUsers); // Still using mock users for now
+      } catch (error) {
+        console.error("Failed to fetch admin data:", error);
+        toast({
+          title: "Error Loading Data",
+          description: "Could not fetch recipes for the admin dashboard.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [toast]);
 
   const handleRoleChange = (userId: string, newRole: UserRole) => {
     setUsers(prevUsers =>
@@ -40,12 +52,22 @@ export default function AdminDashboardPage() {
     }
   };
   
-  const handleDeleteRecipe = (recipeId: string, recipeTitle: string) => {
-    setRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
-    toast({
-        title: "Recipe Deleted (Mock)",
-        description: `"${recipeTitle}" has been removed from the view.`,
-    });
+  const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
+    try {
+        await deleteRecipeFromFirestore(recipeId);
+        setRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
+        toast({
+            title: "Recipe Deleted",
+            description: `"${recipeTitle}" has been permanently deleted from the database.`,
+        });
+    } catch(error) {
+        console.error("Error deleting recipe from admin dashboard:", error);
+        toast({
+            title: "Deletion Failed",
+            description: "Could not delete the recipe.",
+            variant: "destructive"
+        });
+    }
   };
 
   const totalDonations = users.reduce((acc, user) => acc + (user.lastDonationAmount || 0), 0);

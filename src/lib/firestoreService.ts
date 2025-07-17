@@ -111,6 +111,30 @@ export const getPublicRecipesFromFirestore = async (count?: number): Promise<Rec
   });
 };
 
+export const getAllRecipesFromFirestore = async (): Promise<Recipe[]> => {
+  console.log("Fetching all recipes from Firestore for admin...");
+  const recipesCollectionRef = collection(db, 'recipes');
+  const q = query(recipesCollectionRef, orderBy('createdAt', 'desc'));
+  const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) {
+    console.log("No recipes found in Firestore at all.");
+    return [];
+  }
+  console.log(`Found ${querySnapshot.docs.length} total recipes for admin.`);
+  return querySnapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      ...data,
+      createdAt: formatTimestamp(data.createdAt as Timestamp | string | undefined),
+      updatedAt: formatTimestamp(data.updatedAt as Timestamp | string | undefined),
+      ingredients: (data.ingredients || []).map((ing: Ingredient, idx: number) => ({...ing, id: ing.id || `ing-${docSnap.id}-${idx}`})),
+      steps: (data.steps || []).map((step: RecipeStep, idx: number) => ({...step, id: step.id || `step-${docSnap.id}-${idx}`})),
+      isPublic: data.isPublic ?? false,
+    } as Recipe;
+  });
+};
+
 export const getRecipeByIdFromFirestore = async (recipeId: string): Promise<Recipe | null> => {
   console.log(`Fetching recipe by ID: ${recipeId} from Firestore...`);
   const recipeDocRef = doc(db, 'recipes', recipeId);
