@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
 export default function EditRecipePage({ params }: { params: { id: string } }) {
+  const { id: recipeId } = params;
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -20,7 +21,6 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
   const [accessDenied, setAccessDenied] = useState(false);
   
   useEffect(() => {
-    const recipeId = params.id;
     if (authLoading) return;
 
     if (!isAuthenticated) {
@@ -49,7 +49,7 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
         setAccessDenied(true); // Deny access on error as well
       })
       .finally(() => setLoadingRecipe(false));
-  }, [params.id, isAuthenticated, authLoading, user, router, toast]);
+  }, [recipeId, isAuthenticated, authLoading, user, router, toast]);
 
   if (authLoading || loadingRecipe) {
     return (
