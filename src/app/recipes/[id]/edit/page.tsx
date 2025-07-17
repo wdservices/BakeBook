@@ -18,9 +18,9 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loadingRecipe, setLoadingRecipe] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
-  const recipeId = params.id;
-
+  
   useEffect(() => {
+    const recipeId = params.id;
     if (authLoading) return;
 
     if (!isAuthenticated) {
@@ -49,7 +49,7 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
         setAccessDenied(true); // Deny access on error as well
       })
       .finally(() => setLoadingRecipe(false));
-  }, [recipeId, isAuthenticated, authLoading, user, router, toast]);
+  }, [params.id, isAuthenticated, authLoading, user, router, toast]);
 
   if (authLoading || loadingRecipe) {
     return (

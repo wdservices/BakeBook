@@ -26,9 +26,9 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const recipeId = params.id;
 
   useEffect(() => {
+    const recipeId = params.id;
     setLoading(true);
     getRecipeByIdFromFirestore(recipeId)
       .then(fetchedRecipe => {
@@ -61,7 +61,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         toast({ title: "Error", description: "Could not load the baking recipe.", variant: "destructive" });
       })
       .finally(() => setLoading(false));
-  }, [recipeId, toast]);
+  }, [params.id, toast]);
 
   const handleIngredientToggle = (ingredientId: string) => {
     const newCheckedState = {
@@ -69,7 +69,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       [ingredientId]: !checkedIngredients[ingredientId],
     };
     setCheckedIngredients(newCheckedState);
-    localStorage.setItem(`checkedIngredients_${recipeId}`, JSON.stringify(newCheckedState));
+    localStorage.setItem(`checkedIngredients_${params.id}`, JSON.stringify(newCheckedState));
   };
 
   const handleStepToggle = (stepId: string) => {
@@ -78,7 +78,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       [stepId]: !completedSteps[stepId],
     };
     setCompletedSteps(newCompletedState);
-    localStorage.setItem(`completedSteps_${recipeId}`, JSON.stringify(newCompletedState));
+    localStorage.setItem(`completedSteps_${params.id}`, JSON.stringify(newCompletedState));
   };
 
   const stepsProgress = useMemo(() => {
