@@ -47,28 +47,28 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </SidebarHeader>
           <SidebarMenu className="p-2">
             <SidebarMenuItem>
-              <Link href="/admin/dashboard" passHref legacyBehavior>
+              <Link href="/admin/dashboard" passHref>
                 <SidebarMenuButton tooltip="Dashboard">
                   <LayoutDashboard /> <span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/admin/dashboard" passHref legacyBehavior>
+              <Link href="/admin/dashboard" passHref>
                 <SidebarMenuButton tooltip="Users">
                   <Users /> <span className="group-data-[collapsible=icon]:hidden">Users</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <Link href="/recipes" passHref legacyBehavior>
+              <Link href="/recipes" passHref>
                 <SidebarMenuButton tooltip="Recipes Admin">
                   <ChefHat /> <span className="group-data-[collapsible=icon]:hidden">Recipes</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/admin/dashboard" passHref legacyBehavior> 
+              <Link href="/admin/dashboard" passHref> 
                 <SidebarMenuButton tooltip="Settings">
                   <Settings /> <span className="group-data-[collapsible=icon]:hidden">Settings</span>
                 </SidebarMenuButton>
@@ -77,7 +77,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </SidebarMenu>
           <div className="mt-auto p-2">
              <SidebarMenuItem>
-                <Link href="/" passHref legacyBehavior>
+                <Link href="/" passHref>
                   <SidebarMenuButton tooltip="Back to Site">
                     <Home /> <span className="group-data-[collapsible=icon]:hidden">Back to Site</span>
                   </SidebarMenuButton>

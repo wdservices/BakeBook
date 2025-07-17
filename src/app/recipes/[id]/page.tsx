@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Recipe } from '@/types';
 import { Clock, ChefHat, Edit3, ListChecks, CheckSquare, Square, ArrowLeft, UserCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Spinner from '@/components/ui/Spinner';
@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { getRecipeByIdFromFirestore } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function RecipePage({ params }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -123,8 +124,8 @@ export default function RecipePage({ params }: { params: { id: string } }) {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <CardTitle className="text-4xl font-headline mb-2 md:mb-0 bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">{recipe.title}</CardTitle>
             {canEdit && (
-              <Link href={`/recipes/${recipe.id}/edit`} legacyBehavior passHref>
-                <Button asChild variant="outline"><Edit3 className="mr-2 h-4 w-4" /> Edit Recipe</Button>
+              <Link href={`/recipes/${recipe.id}/edit`} className={cn(buttonVariants({ variant: 'outline' }))}>
+                <Edit3 className="mr-2 h-4 w-4" /> Edit Recipe
               </Link>
             )}
           </div>
