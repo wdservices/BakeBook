@@ -2,7 +2,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   onAuthStateChanged,
@@ -37,6 +38,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Define the permanent admin email address here
+const ADMIN_EMAIL = 'spellz49@gmail.com';
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,12 +52,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchAndSetUser = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
       const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
+      
+      // Determine the user's role. If their email is the admin email, they are an admin.
+      const userRole = firebaseUser.email === ADMIN_EMAIL ? UserRole.ADMIN : (userProfile?.role || UserRole.USER);
+
       const appUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email,
         name: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
-        role: userProfile?.role || UserRole.USER,
+        role: userRole,
         brandName: userProfile?.brandName,
         phoneNumber: userProfile?.phoneNumber,
         address: userProfile?.address,
@@ -62,6 +70,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         lastPromptedDate: userProfile?.lastPromptedDate,
       };
       setUser(appUser);
+
+      // If this is the admin user, ensure their role is set correctly in Firestore
+      if (userRole === UserRole.ADMIN && userProfile?.role !== UserRole.ADMIN) {
+        await updateUserProfileFields(firebaseUser.uid, { role: UserRole.ADMIN });
+      }
+
     } else {
       setUser(null);
     }
@@ -148,7 +162,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         brandName: data.brandName || undefined,
         phoneNumber: data.phoneNumber || undefined,
         address: data.address || undefined,
-        role: UserRole.USER,
+        // Check if the signing-up user is the designated admin
+        role: data.email === ADMIN_EMAIL ? UserRole.ADMIN : UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
       await addUserProfileToFirestore(firebaseUser.uid, profileData);
@@ -178,10 +193,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchAndSetUser(userCredential.user);
       
       toast({ title: "Login Successful", description: `Welcome back!` });
-      // The fetchAndSetUser will set the role, and the layout will handle redirection.
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
-      // After login, we can't immediately know the role, so we push to a default and let the layouts redirect.
-      router.push(redirectPath || '/dashboard');
+      
+      // Determine if the user is an admin and redirect accordingly
+      if (userCredential.user.email === ADMIN_EMAIL) {
+        router.push(redirectPath === '/admin/dashboard' || !redirectPath ? '/admin/dashboard' : redirectPath);
+      } else {
+        router.push(redirectPath || '/dashboard');
+      }
+
       return true;
     } catch (error: any) {
        console.error("Login error:", error);
@@ -225,7 +245,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [router, toast]);
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdmin = user?.role === UserRole.ADMIN && user?.email === ADMIN_EMAIL;
 
   const authPages = ['/login', '/signup'];
   if (loading && !user && !authPages.includes(pathname)) {

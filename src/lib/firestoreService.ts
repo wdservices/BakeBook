@@ -238,7 +238,7 @@ export const getUserProfileFromFirestore = async (userId: string): Promise<Parti
 
 export const updateUserProfileFields = async (
   userId: string,
-  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address' | 'lastDonationDate' | 'lastPromptedDate' | 'lastDonationAmount'>>
+  data: Partial<Pick<User, 'name' | 'brandName' | 'phoneNumber' | 'address' | 'role' | 'lastDonationDate' | 'lastPromptedDate' | 'lastDonationAmount'>>
 ): Promise<void> => {
   console.log(`Updating user profile fields for ID: ${userId} in Firestore with:`, data);
   const userDocRef = doc(db, 'users', userId);
