@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart } from 'lucide-react';
+import { Heart, X } from 'lucide-react';
 import Script from 'next/script';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -23,12 +23,28 @@ interface DonationModalProps {
   onConfirmDonation: (amount?: number) => void;
 }
 
+const FLUTTERWAVE_NAIRA_URL = "https://flutterwave.com/donate/hxecwnwbqqxv";
+const FLUTTERWAVE_USD_URL = "https://flutterwave.com/donate/jwfef4kasotf";
+const LEMONSQUEEZY_USD_URL = "https://bakebook.lemonsqueezy.com/buy/6248a0c1-b36b-40b2-9a49-22a4fc54f4a4?embed=1";
+
 const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalProps) => {
   const [amount, setAmount] = useState<number | undefined>(5);
+  const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
+  const [iframeOpen, setIframeOpen] = useState<null | 'flutterwave' | 'lemonsqueezy'>(null);
 
   const handleConfirm = () => {
     onConfirmDonation(amount);
   };
+
+  const handleDonate = (provider: 'flutterwave' | 'lemonsqueezy') => {
+    setIframeOpen(provider);
+  };
+
+  const donationUrl = iframeOpen === 'flutterwave'
+    ? (currency === 'NGN' ? FLUTTERWAVE_NAIRA_URL : FLUTTERWAVE_USD_URL)
+    : iframeOpen === 'lemonsqueezy'
+      ? LEMONSQUEEZY_USD_URL
+      : '';
 
   return (
     <>
@@ -40,40 +56,55 @@ const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalP
               Support Bakebook
             </DialogTitle>
             <DialogDescription>
-              Bakebook is a free platform. Your monthly donation helps us keep the ovens on and develop new features. Thank you for your support!
+              Bakebook is a free platform. Your donation helps us keep the ovens on and develop new features. Thank you for your support!
             </DialogDescription>
           </DialogHeader>
-          
-          <Tabs defaultValue="usd" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="usd">USD ($)</TabsTrigger>
-              <TabsTrigger value="ngn">Naira (₦)</TabsTrigger>
-            </TabsList>
-            <TabsContent value="usd" className="py-4 text-center">
-              <p className="text-sm text-muted-foreground mb-4">Click the button below to proceed with your donation in USD.</p>
-              <a href="https://bakebook.lemonsqueezy.com/buy/6248a0c1-b36b-40b2-9a49-22a4fc54f4a4?embed=1" className="lemonsqueezy-button inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                Donate with Lemon Squeezy
-              </a>
-            </TabsContent>
-            <TabsContent value="ngn" className="py-4 text-center">
-              <p className="text-sm text-muted-foreground">Naira donations are coming soon! Thank you for your patience.</p>
-            </TabsContent>
-          </Tabs>
 
-          <div className="py-2 space-y-2 border-t pt-4">
-            <Label htmlFor="donation-amount" className="text-sm text-center block">Or, if you've already donated, confirm the amount ($)</Label>
-            <Input 
-              id="donation-amount"
-              type="number"
-              placeholder="e.g., 5"
-              value={amount === undefined ? '' : amount}
-              onChange={(e) => setAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
-              className="max-w-xs mx-auto"
-            />
+          <div className="flex justify-center gap-4 mb-4">
+            <Button
+              variant={currency === 'NGN' ? 'default' : 'outline'}
+              onClick={() => setCurrency('NGN')}
+            >
+              Donate in Naira (₦)
+            </Button>
+            <Button
+              variant={currency === 'USD' ? 'default' : 'outline'}
+              onClick={() => setCurrency('USD')}
+            >
+              Donate in USD ($)
+            </Button>
           </div>
 
+          <div className="text-center mb-4">
+            {currency === 'NGN' && (
+              <Button onClick={() => handleDonate('flutterwave')} className="w-full mb-2">
+                Donate with Flutterwave (₦)
+              </Button>
+            )}
+            {currency === 'USD' && (
+              <>
+                <Button onClick={() => handleDonate('flutterwave')} className="w-full mb-2">
+                  Donate with Flutterwave ($)
+                </Button>
+                <Button onClick={() => handleDonate('lemonsqueezy')} className="w-full">
+                  Donate with Lemon Squeezy ($)
+                </Button>
+              </>
+            )}
+          </div>
+
+          <Label htmlFor="donation-amount" className="text-sm text-center block">Or, if you've already donated, confirm the amount ({currency})</Label>
+          <Input
+            id="donation-amount"
+            type="number"
+            placeholder={currency === 'NGN' ? 'e.g., 5000' : 'e.g., 10'}
+            value={amount === undefined ? '' : amount}
+            onChange={(e) => setAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
+            className="max-w-xs mx-auto"
+          />
+
           <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
-             <Button type="button" onClick={handleConfirm}>
+            <Button type="button" onClick={handleConfirm}>
               Confirm My Donation
             </Button>
             <DialogClose asChild>
@@ -84,6 +115,26 @@ const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalP
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {iframeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+          <div className="relative w-full max-w-2xl h-[80vh] bg-white rounded-lg shadow-lg flex flex-col">
+            <button
+              className="absolute top-2 right-2 z-10 p-2 rounded-full hover:bg-gray-200"
+              onClick={() => setIframeOpen(null)}
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+            <iframe
+              src={donationUrl}
+              title="Donation Payment"
+              className="flex-1 w-full rounded-b-lg border-0"
+              style={{ minHeight: '70vh' }}
+              allow="payment"
+            />
+          </div>
+        </div>
+      )}
       <Script src="https://assets.lemonsqueezy.com/lemon.js" strategy="lazyOnload" />
     </>
   );

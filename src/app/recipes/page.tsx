@@ -9,6 +9,7 @@ import Spinner from '@/components/ui/Spinner';
 import { Search } from 'lucide-react';
 import { mockRecipes } from '@/data/mockRecipes'; // Use mock data
 import { useToast } from '@/hooks/use-toast';
+import { getPublicRecipesFromFirestore } from '@/lib/firestoreService';
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -18,16 +19,26 @@ export default function RecipesPage() {
 
   useEffect(() => {
     setLoading(true);
-    // Simulate fetching by using mock data
-    try {
-      const publicRecipes = mockRecipes.filter(r => r.isPublic);
-      setRecipes(publicRecipes);
-    } catch (error) {
-       console.error("Error loading mock recipes:", error);
-       toast({ title: "Error", description: "Could not load recipes.", variant: "destructive" });
-    } finally {
-        setTimeout(() => setLoading(false), 300); // Simulate network delay
+    async function fetchRecipes() {
+      try {
+        // Fetch public recipes from Firestore
+        const firestoreRecipes = await getPublicRecipesFromFirestore();
+        // Get public mock recipes
+        const publicMockRecipes = mockRecipes.filter(r => r.isPublic);
+        // Merge and deduplicate by id (Firestore takes precedence)
+        const allRecipesMap = new Map();
+        [...publicMockRecipes, ...firestoreRecipes].forEach(recipe => {
+          allRecipesMap.set(recipe.id, recipe);
+        });
+        setRecipes(Array.from(allRecipesMap.values()));
+      } catch (error) {
+        console.error("Error loading recipes:", error);
+        toast({ title: "Error", description: "Could not load recipes.", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
     }
+    fetchRecipes();
   }, [toast]);
 
   const filteredRecipes = useMemo(() => {
