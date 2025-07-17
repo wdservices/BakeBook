@@ -18,17 +18,18 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loadingRecipe, setLoadingRecipe] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const recipeId = params.id;
 
   useEffect(() => {
     if (authLoading) return;
 
     if (!isAuthenticated) {
-      router.push(`/login?redirect=/recipes/${params.id}/edit`);
+      router.push(`/login?redirect=/recipes/${recipeId}/edit`);
       return;
     }
     
     setLoadingRecipe(true);
-    getRecipeByIdFromFirestore(params.id)
+    getRecipeByIdFromFirestore(recipeId)
       .then(fetchedRecipe => {
         if (fetchedRecipe) {
           if (user && (fetchedRecipe.authorId === user.id)) {
@@ -48,7 +49,7 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
         setAccessDenied(true); // Deny access on error as well
       })
       .finally(() => setLoadingRecipe(false));
-  }, [params.id, isAuthenticated, authLoading, user, router, toast]);
+  }, [recipeId, isAuthenticated, authLoading, user, router, toast]);
 
   if (authLoading || loadingRecipe) {
     return (

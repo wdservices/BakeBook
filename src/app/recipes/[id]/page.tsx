@@ -25,10 +25,10 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const recipeId = params.id;
 
   useEffect(() => {
     setLoading(true);
-    const recipeId = params.id;
     getRecipeByIdFromFirestore(recipeId)
       .then(fetchedRecipe => {
         if (fetchedRecipe) {
@@ -60,10 +60,9 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         toast({ title: "Error", description: "Could not load the baking recipe.", variant: "destructive" });
       })
       .finally(() => setLoading(false));
-  }, [params.id, toast]);
+  }, [recipeId, toast]);
 
   const handleIngredientToggle = (ingredientId: string) => {
-    const recipeId = params.id;
     const newCheckedState = {
       ...checkedIngredients,
       [ingredientId]: !checkedIngredients[ingredientId],
@@ -73,7 +72,6 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   };
 
   const handleStepToggle = (stepId: string) => {
-    const recipeId = params.id;
     const newCompletedState = {
       ...completedSteps,
       [stepId]: !completedSteps[stepId],
