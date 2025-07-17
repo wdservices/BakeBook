@@ -12,23 +12,25 @@ import { Sidebar, SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButt
 import { LayoutDashboard, Users, Settings, ChefHat, LogOut, Home } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading, logout } = useAuth(); // Removed isAdmin for now
+  const { isAuthenticated, isAdmin, loading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         router.push('/login?redirect=/admin/dashboard');
+      } else if (!isAdmin) {
+        // If logged in but not an admin, redirect away from admin area
+        router.push('/dashboard?error=unauthorized');
       }
-      // Add role-based access control here later if needed, e.g., using Firestore custom claims
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, isAdmin, loading, router]);
 
-  if (loading || !isAuthenticated) {
+  if (loading || !isAuthenticated || !isAdmin) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)]">
         <Spinner size={48} />
-        {!loading && !isAuthenticated && <p className="mt-4">Redirecting to login...</p>}
+        {!loading && <p className="mt-4">Checking credentials...</p>}
       </div>
     );
   }

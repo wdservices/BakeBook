@@ -25,6 +25,7 @@ import DonationModal from '@/components/donation/DonationModal';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   signupWithEmailPassword: (data: SignUpFormValues) => Promise<boolean>;
   loginWithEmailPassword: (data: LoginFormValues) => Promise<boolean>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -177,7 +178,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchAndSetUser(userCredential.user);
       
       toast({ title: "Login Successful", description: `Welcome back!` });
+      // The fetchAndSetUser will set the role, and the layout will handle redirection.
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
+      // After login, we can't immediately know the role, so we push to a default and let the layouts redirect.
       router.push(redirectPath || '/dashboard');
       return true;
     } catch (error: any) {
@@ -222,6 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [router, toast]);
 
   const isAuthenticated = !!user;
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   const authPages = ['/login', '/signup'];
   if (loading && !user && !authPages.includes(pathname)) {
@@ -233,7 +237,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signupWithEmailPassword, loginWithEmailPassword, sendPasswordReset, logout, loading, refreshUserProfile, handleConfirmDonation }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, signupWithEmailPassword, loginWithEmailPassword, sendPasswordReset, logout, loading, refreshUserProfile, handleConfirmDonation }}>
       {children}
       <DonationModal
         open={isDonationModalOpen}
