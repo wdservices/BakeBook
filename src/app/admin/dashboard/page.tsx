@@ -11,7 +11,51 @@ import { UserRole } from '@/types';
 import { Users, ChefHat, BarChart3, DollarSign } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/hooks/use-toast';
-import { getAllRecipesFromFirestore, deleteRecipeFromFirestore } from '@/lib/firestoreService';
+import { getAllRecipesFromFirestore, deleteRecipeFromFirestore, getAllUsersFromFirestore } from '@/lib/firestoreService';
+
+function getCurrentMonthYear() {
+  const now = new Date();
+  return { month: now.getMonth(), year: now.getFullYear() };
+}
+
+function isDonationThisMonth(dateStr: string | null | undefined) {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  const { month, year } = getCurrentMonthYear();
+  return date.getMonth() === month && date.getFullYear() === year;
+}
+
+function DonorLeaderboard() {
+  const [topDonors, setTopDonors] = useState<User[]>([]);
+
+  useEffect(() => {
+    async function fetchDonors() {
+      const users = await getAllUsersFromFirestore();
+      const monthlyDonors = users.filter(u => u.lastDonationAmount && isDonationThisMonth(u.lastDonationDate));
+      const sorted = monthlyDonors.sort((a, b) => (b.lastDonationAmount || 0) - (a.lastDonationAmount || 0));
+      setTopDonors(sorted.slice(0, 3));
+    }
+    fetchDonors();
+  }, []);
+
+  if (topDonors.length === 0) return null;
+  return (
+    <div className="bg-gradient-to-r from-yellow-100 to-yellow-300 border border-yellow-400 rounded-lg p-4 mb-8 text-center animate-fade-in">
+      <h2 className="text-xl font-bold text-yellow-800 mb-2">Top Donors This Month</h2>
+      <ul className="mb-2">
+        {topDonors.map((donor, idx) => (
+          <li key={donor.id} className="text-yellow-900 font-semibold">
+            {idx === 0 && '🥇 '}
+            {idx === 1 && '🥈 '}
+            {idx === 2 && '🥉 '}
+            {donor.brandName || donor.name || donor.email} - ₦{donor.lastDonationAmount?.toLocaleString() || 0}
+          </li>
+        ))}
+      </ul>
+      <p className="text-yellow-800">Thank you to all our supporters! Your generosity keeps BakeBook running.</p>
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<User[]>(mockUsers);
@@ -79,6 +123,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
+      <DonorLeaderboard />
       <h1 className="text-4xl font-headline animate-fade-in bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Admin Dashboard</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

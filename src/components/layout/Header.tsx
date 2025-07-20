@@ -18,7 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Spinner from '../ui/Spinner';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-const Header = () => {
+interface HeaderProps {
+  onOpenDonationModal?: () => void;
+}
+
+const Header = ({ onOpenDonationModal }: HeaderProps) => {
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -94,6 +98,11 @@ const Header = () => {
                       <Link href="/bakers">Bakers</Link>
                     </Button>
                   </SheetClose>
+                  <SheetClose asChild>
+                    <Button variant="outline" className="w-full justify-start text-base text-primary font-semibold" onClick={onOpenDonationModal}>
+                      Donate
+                    </Button>
+                  </SheetClose>
                   {/* Optional: Add auth links here too for mobile if needed */}
                 </div>
               </SheetContent>
@@ -107,6 +116,9 @@ const Header = () => {
             </Button>
             <Button variant="ghost" asChild>
               <Link href="/bakers">Bakers</Link>
+            </Button>
+            <Button variant="outline" className="ml-2 text-primary font-semibold" onClick={onOpenDonationModal}>
+              Donate
             </Button>
           </div>
 

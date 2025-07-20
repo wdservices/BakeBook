@@ -257,6 +257,32 @@ export const updateUserProfileFields = async (
   console.log(`User profile fields for ${userId} updated successfully.`);
 };
 
+export const getAllUsersFromFirestore = async (): Promise<User[]> => {
+  console.log("Fetching all users from Firestore for leaderboard...");
+  const usersCollectionRef = collection(db, 'users');
+  const querySnapshot = await getDocs(usersCollectionRef);
+  if (querySnapshot.empty) {
+    console.log("No users found in Firestore.");
+    return [];
+  }
+  return querySnapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      email: data.email,
+      name: data.name,
+      brandName: data.brandName,
+      phoneNumber: data.phoneNumber,
+      address: data.address,
+      role: data.role,
+      photoURL: data.photoURL,
+      lastDonationAmount: data.lastDonationAmount,
+      lastDonationDate: data.lastDonationDate ? formatTimestamp(data.lastDonationDate) : null,
+      lastPromptedDate: data.lastPromptedDate ? formatTimestamp(data.lastPromptedDate) : null,
+    } as User;
+  });
+};
+
 
 // --- Invoice Functions (Placeholders for now) ---
 

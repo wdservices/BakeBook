@@ -27,24 +27,28 @@ const FLUTTERWAVE_NAIRA_URL = "https://flutterwave.com/donate/hxecwnwbqqxv";
 const FLUTTERWAVE_USD_URL = "https://flutterwave.com/donate/jwfef4kasotf";
 const LEMONSQUEEZY_USD_URL = "https://bakebook.lemonsqueezy.com/buy/6248a0c1-b36b-40b2-9a49-22a4fc54f4a4?embed=1";
 
+const DONATION_MESSAGE =
+  "If you can donate just ₦1500 or $1 a month, you'll help keep BakeBook running for you and the whole community. Every little bit truly makes a difference!";
+
 const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalProps) => {
   const [amount, setAmount] = useState<number | undefined>(5);
   const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
-  const [iframeOpen, setIframeOpen] = useState<null | 'flutterwave' | 'lemonsqueezy'>(null);
+  const [iframeOpen, setIframeOpen] = useState<null | 'lemonsqueezy'>(null);
 
   const handleConfirm = () => {
     onConfirmDonation(amount);
   };
 
   const handleDonate = (provider: 'flutterwave' | 'lemonsqueezy') => {
+    if (provider === 'flutterwave') {
+      const url = currency === 'NGN' ? FLUTTERWAVE_NAIRA_URL : FLUTTERWAVE_USD_URL;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     setIframeOpen(provider);
   };
 
-  const donationUrl = iframeOpen === 'flutterwave'
-    ? (currency === 'NGN' ? FLUTTERWAVE_NAIRA_URL : FLUTTERWAVE_USD_URL)
-    : iframeOpen === 'lemonsqueezy'
-      ? LEMONSQUEEZY_USD_URL
-      : '';
+  const donationUrl = iframeOpen === 'lemonsqueezy' ? LEMONSQUEEZY_USD_URL : '';
 
   return (
     <>
@@ -56,6 +60,7 @@ const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalP
               Support Bakebook
             </DialogTitle>
             <DialogDescription>
+              <span className="block mb-2 text-base font-semibold text-primary">{DONATION_MESSAGE}</span>
               Bakebook is a free platform. Your donation helps us keep the ovens on and develop new features. Thank you for your support!
             </DialogDescription>
           </DialogHeader>
@@ -77,15 +82,19 @@ const DonationModal = ({ open, onOpenChange, onConfirmDonation }: DonationModalP
 
           <div className="text-center mb-4">
             {currency === 'NGN' && (
-              <Button onClick={() => handleDonate('flutterwave')} className="w-full mb-2">
-                Donate with Flutterwave (₦)
-              </Button>
+              <>
+                <Button onClick={() => handleDonate('flutterwave')} className="w-full mb-2">
+                  Donate with Flutterwave (₦)
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">For your security, Flutterwave donations open in a new tab.</p>
+              </>
             )}
             {currency === 'USD' && (
               <>
                 <Button onClick={() => handleDonate('flutterwave')} className="w-full mb-2">
                   Donate with Flutterwave ($)
                 </Button>
+                <p className="text-xs text-muted-foreground mt-1 mb-2">For your security, Flutterwave donations open in a new tab.</p>
                 <Button onClick={() => handleDonate('lemonsqueezy')} className="w-full">
                   Donate with Lemon Squeezy ($)
                 </Button>
