@@ -5,11 +5,13 @@ import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Recipe } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { PlusCircle, Trash2, HelpCircle, X } from 'lucide-react';
 import IngredientInput from './IngredientInput';
 import StepInput from './StepInput';
 import { useAuth } from '@/hooks/useAuth';
@@ -149,6 +151,57 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
             <Label htmlFor="imageUrl">Image URL (Optional)</Label>
             <Input id="imageUrl" {...register('imageUrl')} placeholder="https://example.com/image.jpg" />
             {errors.imageUrl && <p className="text-sm text-destructive">{errors.imageUrl.message}</p>}
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <button 
+                  type="button" 
+                  className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1 mt-1"
+                >
+                  <HelpCircle size={14} />
+                  How to get an image link?
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <HelpCircle size={20} />
+                    How to Add Recipe Images
+                  </DialogTitle>
+                  <DialogDescription asChild>
+                    <div className="space-y-4 text-sm">
+                      <p>To add an image to your recipe, follow these steps:</p>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <h4 className="font-semibold text-foreground">1. Upload to a Platform:</h4>
+                          <p>Upload your recipe image to one of these platforms:</p>
+                          <ul className="list-disc list-inside ml-2 space-y-1">
+                            <li><strong>Facebook:</strong> Post the image, right-click → "Copy image address"</li>
+                            <li><strong>Instagram:</strong> Post the image, open in browser, right-click → "Copy image address"</li>
+                            <li><strong>Google Drive:</strong> Upload image, set to "Anyone with link can view", copy the shareable link</li>
+                          </ul>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-foreground">2. Copy the Link:</h4>
+                          <p>Right-click on the image and select "Copy image address" or "Copy image URL"</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-foreground">3. Paste Here:</h4>
+                          <p>Paste the copied link into the Image URL field above</p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                        <p className="text-yellow-800"><strong>Tip:</strong> Make sure the link ends with an image extension like .jpg, .png, or .webp for best results!</p>
+                      </div>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
