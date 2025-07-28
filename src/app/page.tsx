@@ -131,12 +131,6 @@ export default function HomePage() {
       <BestDonorCallout />
       <div 
         className="w-full relative min-h-[calc(100vh-var(--header-height,10vh)-var(--footer-height,10vh))] flex flex-col items-center justify-center text-center p-4 overflow-hidden -mt-8 -mb-8"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1486427944299-d1955d23e34d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
       >
         {/* Overlay to ensure text readability */}
         <div className="absolute inset-0 bg-background/85 z-10"></div>
