@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,7 +18,7 @@ import { getRecipeByIdFromFirestore } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-export default function RecipePage({ params }: { params: { id: string } }) {
+export default function RecipePage({ params }: { params: Promise<{ id: string }> }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
@@ -26,9 +26,10 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const resolvedParams = use(params);
 
   useEffect(() => {
-    const recipeId = params.id;
+    const recipeId = resolvedParams.id;
     setLoading(true);
     getRecipeByIdFromFirestore(recipeId)
       .then(fetchedRecipe => {
@@ -61,7 +62,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         toast({ title: "Error", description: "Could not load the baking recipe.", variant: "destructive" });
       })
       .finally(() => setLoading(false));
-  }, [params.id, toast]);
+  }, [resolvedParams.id, toast]);
 
   const handleIngredientToggle = (ingredientId: string) => {
     const newCheckedState = {
@@ -69,7 +70,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       [ingredientId]: !checkedIngredients[ingredientId],
     };
     setCheckedIngredients(newCheckedState);
-    localStorage.setItem(`checkedIngredients_${params.id}`, JSON.stringify(newCheckedState));
+    localStorage.setItem(`checkedIngredients_${resolvedParams.id}`, JSON.stringify(newCheckedState));
   };
 
   const handleStepToggle = (stepId: string) => {
@@ -78,7 +79,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       [stepId]: !completedSteps[stepId],
     };
     setCompletedSteps(newCompletedState);
-    localStorage.setItem(`completedSteps_${params.id}`, JSON.stringify(newCompletedState));
+    localStorage.setItem(`completedSteps_${resolvedParams.id}`, JSON.stringify(newCompletedState));
   };
 
   const stepsProgress = useMemo(() => {

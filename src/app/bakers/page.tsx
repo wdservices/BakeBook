@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { mockUsers } from '@/data/mockUsers';
+
 import type { User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,9 +16,9 @@ export default function BakersPage() {
 
   useEffect(() => {
     setLoading(true);
-    // Simulate fetching data
+    // TODO: Replace with real user fetching from Firestore
     setTimeout(() => {
-      setBakers(mockUsers); // For now, all users are considered potential bakers to list
+      setBakers([]); // No mock data - will show empty state
       setLoading(false);
     }, 500);
   }, []);

@@ -4,15 +4,16 @@
 import RecipeForm from '@/components/recipes/RecipeForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Spinner from '@/components/ui/Spinner';
 import type { Recipe } from '@/types';
 import { getRecipeByIdFromFirestore } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
-export default function EditRecipePage({ params }: { params: { id: string } }) {
-  const { id: recipeId } = params;
+export default function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const { id: recipeId } = resolvedParams;
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();

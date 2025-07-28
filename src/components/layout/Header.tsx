@@ -6,14 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Menu, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Spinner from '../ui/Spinner';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -69,8 +62,8 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
         </Link>
 
         <nav className="flex items-center gap-2">
-          {/* Mobile Navigation - Hamburger Menu */}
-          <div className="md:hidden">
+          {/* Navigation - Hamburger Menu */}
+          <div>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -88,6 +81,42 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
                   </SheetTitle>
                 </SheetHeader>
                 <div className="p-4 grid gap-3">
+                  {/* User Information at the top */}
+                  {isAuthenticated && user && (
+                    <>
+                      <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg mb-2">
+                        <UserAvatar />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{user.brandName || user.name || user.email || 'User'}</p>
+                          {user.email && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
+                        </div>
+                      </div>
+                      
+                      {/* User Menu Items */}
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/dashboard')}>
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          My Dashboard
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/recipes/new')}>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Create New Recipe
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/dashboard/invoices/new')}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Create Invoice
+                        </Button>
+                      </SheetClose>
+                      
+                      <div className="border-t pt-3 mt-2" />
+                    </>
+                  )}
+                  
+                  {/* Navigation Links */}
                   <SheetClose asChild>
                     <Button variant="ghost" asChild className="w-full justify-start text-base">
                       <Link href="/recipes">Recipes</Link>
@@ -103,61 +132,54 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
                       Donate
                     </Button>
                   </SheetClose>
-                  {/* Optional: Add auth links here too for mobile if needed */}
+                  
+                  {/* Auth Links for non-authenticated users - Mobile only */}
+                  {!isAuthenticated && (
+                    <>
+                      <div className="border-t pt-3 mt-2 md:hidden" />
+                      <div className="md:hidden">
+                        <SheetClose asChild>
+                          <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/login')}>
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Login
+                          </Button>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Button className="w-full justify-start text-base" onClick={() => router.push('/signup')}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Sign Up
+                          </Button>
+                        </SheetClose>
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Logout for authenticated users */}
+                  {isAuthenticated && user && (
+                    <>
+                      <div className="border-t pt-3 mt-2" />
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base text-destructive hover:text-destructive-foreground hover:bg-destructive" onClick={logout}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </Button>
+                      </SheetClose>
+                    </>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" asChild>
-              <Link href="/recipes">Recipes</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/bakers">Bakers</Link>
-            </Button>
-            <Button variant="outline" className="ml-2 text-primary font-semibold" onClick={onOpenDonationModal}>
-              Donate
-            </Button>
-          </div>
-
-          {/* Auth Section */}
-          <div className="flex items-center gap-2 ml-2">
+          {/* Desktop Authentication Section */}
+          <div className="hidden md:flex items-center gap-2 ml-2">
             {authLoading ? (
               <Spinner size={24} />
             ) : isAuthenticated && user ? (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 p-1 rounded-full">
-                      <UserAvatar />
-                      <span className="hidden md:inline text-sm">{user.brandName || user.name || user.email || 'User'}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                         <LayoutDashboard className="mr-2 h-4 w-4" />
-                          My Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/recipes/new')}>
-                         <PlusCircle className="mr-2 h-4 w-4" />
-                          Create New Recipe
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/invoices/new')}>
-                         <FileText className="mr-2 h-4 w-4" />
-                          Create Invoice
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+              <div className="flex items-center gap-2">
+                <UserAvatar />
+                <span className="text-sm font-medium">{user.brandName || user.name || user.email || 'User'}</span>
+              </div>
             ) : (
               <div className="flex items-center gap-1 md:gap-2">
                 <Button variant="ghost" onClick={() => router.push('/login')} className="px-2 sm:px-3">
@@ -171,6 +193,7 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
               </div>
             )}
           </div>
+
         </nav>
       </div>
     </header>

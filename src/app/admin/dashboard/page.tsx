@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import DashboardStatsCard from '@/components/admin/DashboardStatsCard';
 import UserManagementTable from '@/components/admin/UserManagementTable';
 import RecipeManagementTable from '@/components/admin/RecipeManagementTable';
-import { mockUsers } from '@/data/mockUsers';
+
 import type { User, Recipe } from '@/types';
 import { UserRole } from '@/types';
 import { Users, ChefHat, BarChart3, DollarSign } from 'lucide-react';
@@ -58,7 +58,7 @@ function DonorLeaderboard() {
 }
 
 export default function AdminDashboardPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
       try {
         const allRecipes = await getAllRecipesFromFirestore();
         setRecipes(allRecipes);
-        setUsers(mockUsers); // Still using mock users for now
+        setUsers([]); // TODO: Fetch real users from Firestore
       } catch (error) {
         console.error("Failed to fetch admin data:", error);
         toast({
@@ -85,15 +85,10 @@ export default function AdminDashboardPage() {
   }, [toast]);
 
   const handleRoleChange = (userId: string, newRole: UserRole) => {
-    setUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId ? { ...user, role: newRole } : user
-      )
+    const updatedUsers = users.map(u => 
+      u.id === userId ? { ...u, role: newRole } : u
     );
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
-    if (userIndex > -1) {
-        mockUsers[userIndex].role = newRole;
-    }
+    setUsers(updatedUsers);
   };
   
   const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {

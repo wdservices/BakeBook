@@ -7,7 +7,7 @@ import RecipeSearchInput from '@/components/recipes/RecipeSearchInput';
 import type { Recipe } from '@/types';
 import Spinner from '@/components/ui/Spinner';
 import { Search } from 'lucide-react';
-import { mockRecipes } from '@/data/mockRecipes'; // Use mock data
+
 import { useToast } from '@/hooks/use-toast';
 import { getPublicRecipesFromFirestore } from '@/lib/firestoreService';
 
@@ -23,14 +23,7 @@ export default function RecipesPage() {
       try {
         // Fetch public recipes from Firestore
         const firestoreRecipes = await getPublicRecipesFromFirestore();
-        // Get public mock recipes
-        const publicMockRecipes = mockRecipes.filter(r => r.isPublic);
-        // Merge and deduplicate by id (Firestore takes precedence)
-        const allRecipesMap = new Map();
-        [...publicMockRecipes, ...firestoreRecipes].forEach(recipe => {
-          allRecipesMap.set(recipe.id, recipe);
-        });
-        setRecipes(Array.from(allRecipesMap.values()));
+        setRecipes(firestoreRecipes);
       } catch (error) {
         console.error("Error loading recipes:", error);
         toast({ title: "Error", description: "Could not load recipes.", variant: "destructive" });

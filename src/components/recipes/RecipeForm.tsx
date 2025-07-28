@@ -128,7 +128,7 @@ const RecipeForm = ({ initialData, mode }: RecipeFormProps) => {
           {mode === 'create' ? 'Add Your Baking Recipe' : 'Edit Your Baking Recipe'}
         </CardTitle>
         <CardDescription>
-          {mode === 'create' ? 'Share your baking masterpiece!' : 'Make changes to your delicious baking recipe.'}
+          {mode === 'create' ? 'Store and organize your recipes!' : 'Make changes to your delicious baking recipe.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
