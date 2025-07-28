@@ -52,7 +52,7 @@ const RecipeManagementTable = ({ recipes, onDeleteRecipe }: RecipeManagementTabl
                 <TableRow key={recipe.id}>
                   <TableCell>
                     <Image
-                      src={recipe.imageUrl || `https://placehold.co/100x75.png`}
+                      src={recipe.imageUrl || ''}
                       alt={recipe.title || 'Recipe Image'}
                       width={64}
                       height={48}

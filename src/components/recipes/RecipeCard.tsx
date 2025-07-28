@@ -17,7 +17,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
         <CardHeader className="p-0">
           <div className="relative aspect-video w-full">
             <Image
-              src={recipe.imageUrl || 'https://placehold.co/600x400.png?text=Recipe+Image'}
+              src={recipe.imageUrl || ''}
               alt={recipe.title}
               fill={true}
               className="object-cover transition-transform duration-300 group-hover:scale-105"
