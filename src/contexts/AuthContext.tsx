@@ -38,8 +38,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Define the permanent admin email address here
+// Define the permanent admin email address and UID here
 const ADMIN_EMAIL = 'hello.wdservices@gmail.com';
+const ADMIN_UID = 'ezqyXMveXRTeQRWY0GvAEJiYDyJ2';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -53,8 +54,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (firebaseUser) {
       const userProfile = await getUserProfileFromFirestore(firebaseUser.uid);
       
-      // Determine the user's role. If their email is the admin email, they are an admin.
-      const userRole = firebaseUser.email === ADMIN_EMAIL ? UserRole.ADMIN : (userProfile?.role || UserRole.USER);
+      // Determine the user's role. If their email or UID matches admin, they are an admin.
+      const isAdmin = firebaseUser.email === ADMIN_EMAIL || firebaseUser.uid === ADMIN_UID;
+      const userRole = isAdmin ? UserRole.ADMIN : (userProfile?.role || UserRole.USER);
 
       const appUser: User = {
         id: firebaseUser.uid,
@@ -162,8 +164,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         brandName: data.brandName || undefined,
         phoneNumber: data.phoneNumber || undefined,
         address: data.address || undefined,
-        // Check if the signing-up user is the designated admin
-        role: data.email === ADMIN_EMAIL ? UserRole.ADMIN : UserRole.USER,
+        // Check if the signing-up user is the designated admin by email or UID
+        role: data.email === ADMIN_EMAIL || (firebaseUser && firebaseUser.uid === ADMIN_UID) ? UserRole.ADMIN : UserRole.USER,
         photoURL: firebaseUser.photoURL || null,
       };
       await addUserProfileToFirestore(firebaseUser.uid, profileData);
@@ -195,8 +197,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: "Login Successful", description: `Welcome back!` });
       const redirectPath = new URLSearchParams(window.location.search).get('redirect');
       
-      // Determine if the user is an admin and redirect accordingly
-      if (userCredential.user.email === ADMIN_EMAIL) {
+      // Determine if the user is an admin (by email or UID) and redirect accordingly
+      if (userCredential.user.email === ADMIN_EMAIL || userCredential.user.uid === ADMIN_UID) {
         router.push(redirectPath === '/admin/dashboard' || !redirectPath ? '/admin/dashboard' : redirectPath);
       } else {
         router.push(redirectPath || '/dashboard');
