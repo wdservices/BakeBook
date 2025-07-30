@@ -9,8 +9,8 @@ import Image from 'next/image';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import Spinner from '@/components/ui/Spinner';
-import { PlusCircle, User, ChefHat, Edit3, Trash2, Users, Search, Eye, EyeOff, FileText, Save } from 'lucide-react';
-import type { Recipe, User as AppUser } from '@/types';
+import { PlusCircle, User, ChefHat, Edit3, Trash2, Search, FileText, FilePlus, Download, Clock, Calendar, DollarSign, File, Receipt, Users, Save, Eye, EyeOff } from 'lucide-react';
+import type { Recipe, User as AppUser, Invoice } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -28,11 +28,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { getUserRecipesFromFirestore, deleteRecipeFromFirestore, updateRecipeInFirestore, updateUserProfileFields } from '@/lib/firestoreService';
+import { 
+  getUserRecipesFromFirestore, 
+  deleteRecipeFromFirestore, 
+  updateRecipeInFirestore, 
+  updateUserProfileFields,
+  getUserInvoicesFromFirestore 
+} from '@/lib/firestoreService';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const profileFormSchema = z.object({
@@ -48,9 +55,32 @@ export default function DashboardPage() {
   const { user, isAuthenticated, loading: authLoading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  // Define a type for invoices in the dashboard that ensures required fields
+  type DashboardInvoice = {
+    id: string;
+    invoiceNumber: string;
+    invoiceDate: string;
+    dueDate: string | null;
+    status: string;
+    grandTotal: number;
+    recipientName: string | null;
+    recipientCompany: string | null;
+    clientName: string | null;
+    currency: string;
+    createdAt: string;
+    updatedAt: string;
+    [key: string]: any; // Allow additional properties
+  };
+
+  // State management
   const [userRecipes, setUserRecipes] = useState<Recipe[]>([]);
-  const [loadingRecipes, setLoadingRecipes] = useState(true);
-  const [userRecipeSearchTerm, setUserRecipeSearchTerm] = useState('');
+  const [invoices, setInvoices] = useState<DashboardInvoice[]>([]);
+  const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
+  const [loadingInvoices, setLoadingInvoices] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<string>('invoices');
+  const [userRecipeSearchTerm, setUserRecipeSearchTerm] = useState<string>('');
+  const [searchedUserRecipes, setSearchedUserRecipes] = useState<Recipe[]>([]);
+
 
   const { register: registerProfile, handleSubmit: handleSubmitProfile, formState: { errors: profileErrors, isSubmitting: isSubmittingProfile }, reset: resetProfileForm } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -82,23 +112,124 @@ export default function DashboardPage() {
       return;
     }
 
-    if (user?.id) {
-      setLoadingRecipes(true);
-      getUserRecipesFromFirestore(user.id)
-        .then(recipes => {
-          setUserRecipes(recipes);
-        })
-        .catch(error => {
-          console.error("Error fetching user recipes:", error);
-          toast({ title: "Error", description: "Could not load your recipes.", variant: "destructive" });
-        })
-        .finally(() => setLoadingRecipes(false));
-    } else if (isAuthenticated && !user?.id) {
-      setLoadingRecipes(true); 
-    } else {
-       setLoadingRecipes(false);
+    const fetchUserData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoadingRecipes(true);
+        setLoadingInvoices(true);
+        
+        // Fetch both recipes and invoices in parallel
+        const [recipes, userInvoices] = await Promise.all([
+          getUserRecipesFromFirestore(user.id),
+          getUserInvoicesFromFirestore(user.id)
+        ]);
+        
+        setUserRecipes(recipes);
+        
+        // Transform invoices to match DashboardInvoice type
+        const transformedInvoices = userInvoices.map(invoice => {
+          // Ensure all required fields have proper fallbacks
+          const transformed: DashboardInvoice = {
+            id: invoice.id,
+            invoiceNumber: invoice.invoiceNumber || '',
+            invoiceDate: invoice.invoiceDate || new Date().toISOString(),
+            dueDate: invoice.dueDate || null,
+            status: invoice.status || 'draft',
+            grandTotal: invoice.grandTotal || 0,
+            recipientName: invoice.recipientName || null,
+            recipientCompany: invoice.recipientCompany || null,
+            clientName: invoice.recipientName || null, // Map recipientName to clientName
+            currency: invoice.currency || 'USD',
+            createdAt: invoice.createdAt || new Date().toISOString(),
+            updatedAt: invoice.updatedAt || new Date().toISOString()
+          };
+          return transformed;
+        });
+        
+        setInvoices(transformedInvoices);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast({ 
+          title: "Error", 
+          description: "Could not load your data. Please try again later.", 
+          variant: "destructive" 
+        });
+      } finally {
+        setLoadingRecipes(false);
+        setLoadingInvoices(false);
+      }
+    };
+    
+    fetchUserData();
+  }, [authLoading, isAuthenticated, router, user?.id, toast]);
+
+  // Format currency
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Get status badge variant
+  const getStatusVariant = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'paid':
+        return 'default';
+      case 'pending':
+        return 'outline';
+      case 'overdue':
+        return 'destructive';
+      default:
+        return 'secondary';
     }
-  }, [isAuthenticated, authLoading, user, router, toast]);
+  };
+
+  // Filter recipes based on search term
+  useEffect(() => {
+    const filtered = userRecipeSearchTerm
+      ? userRecipes.filter(recipe => 
+          recipe.title.toLowerCase().includes(userRecipeSearchTerm.toLowerCase()) ||
+          (recipe.description?.toLowerCase().includes(userRecipeSearchTerm.toLowerCase()) ?? false)
+        )
+      : [...userRecipes];
+    
+    setSearchedUserRecipes(filtered);
+  }, [userRecipes, userRecipeSearchTerm]);
+
+  // Handle profile form submission
+  const onSubmitProfile: SubmitHandler<ProfileFormValues> = async (data) => {
+    if (!user?.id) return;
+    
+    try {
+      await updateUserProfileFields(user.id, data);
+      await refreshUserProfile();
+      
+      toast({
+        title: "Success",
+        description: "Your profile has been updated.",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleProfileUpdateSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     if (!user?.id) {
@@ -141,22 +272,66 @@ export default function DashboardPage() {
   };
 
   const handleTogglePublic = async (recipeId: string, currentIsPublic: boolean, recipeTitle: string) => {
+    if (!user?.id) return;
     try {
-      await updateRecipeInFirestore(recipeId, { isPublic: !currentIsPublic });
+      // Optimistically update the UI
       setUserRecipes(prevRecipes =>
-        prevRecipes.map(r => (r.id === recipeId ? { ...r, isPublic: !currentIsPublic, updatedAt: new Date().toISOString() } : r))
+        prevRecipes.map(recipe =>
+          recipe.id === recipeId ? { ...recipe, isPublic: !currentIsPublic } : recipe
+        )
       );
+
+      // Update in Firestore
+      await updateRecipeInFirestore(recipeId, { isPublic: !currentIsPublic });
+      
       toast({
-        title: "Recipe Visibility Updated",
-        description: `"${recipeTitle || 'Untitled Recipe'}" is now ${!currentIsPublic ? "public" : "private"}.`,
+        title: 'Success!',
+        description: `Recipe "${recipeTitle}" is now ${!currentIsPublic ? 'public' : 'private'}.`,
+        variant: 'default',
       });
     } catch (error) {
-      console.error("Error updating recipe visibility:", error);
+      console.error('Error updating recipe visibility:', error);
+      // Revert on error
+      setUserRecipes(prevRecipes =>
+        prevRecipes.map(recipe =>
+          recipe.id === recipeId ? { ...recipe, isPublic: currentIsPublic } : recipe
+        )
+      );
+      
       toast({
-        title: "Update Failed",
-        description: "Could not update recipe visibility.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update recipe visibility. Please try again.',
+        variant: 'destructive',
       });
+    }
+  };
+
+  const formatInvoiceDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'paid':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'overdue':
+        return 'destructive';
+      case 'draft':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
 
@@ -180,7 +355,7 @@ export default function DashboardPage() {
   };
 
 
-  const searchedUserRecipes = useMemo(() => {
+  const filteredUserRecipes = useMemo(() => {
     if (!userRecipeSearchTerm) return userRecipes;
     return userRecipes.filter(recipe =>
       recipe.title.toLowerCase().includes(userRecipeSearchTerm.toLowerCase()) ||
@@ -202,8 +377,8 @@ export default function DashboardPage() {
   }
 
   const recipesCount = userRecipes.length;
-  const displayedRecipesCount = searchedUserRecipes.length;
-  const welcomeName = user.brandName || user.name || user.email?.split('@')[0];
+  const displayedRecipesCount = filteredUserRecipes.length;
+  const welcomeName = (user?.brandName || user?.name || user?.email?.split('@')[0] || 'User') as string;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -284,39 +459,69 @@ export default function DashboardPage() {
       </Card>
 
 
-      <div>
+      <Tabs defaultValue="recipes" className="w-full" onValueChange={setActiveTab}>
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-3xl font-headline bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Your Baking Recipes</h2>
-          {userRecipes.length > 0 && (
+          <TabsList className="h-12 w-full md:w-auto">
+            <TabsTrigger value="recipes" className="flex items-center gap-2">
+              <ChefHat className="h-4 w-4" />
+              <span>Recipes</span>
+              {userRecipes.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {userRecipes.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              <span>Invoices</span>
+              {invoices.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {invoices.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          {activeTab === 'recipes' && userRecipes.length > 0 && (
             <div className="relative w-full md:w-auto md:max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Search your recipes..."
-                    value={userRecipeSearchTerm}
-                    onChange={(e) => setUserRecipeSearchTerm(e.target.value)}
-                    className="pl-10 py-2 text-sm rounded-md"
-                />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search your recipes..."
+                value={userRecipeSearchTerm}
+                onChange={(e) => setUserRecipeSearchTerm(e.target.value)}
+                className="pl-10 py-2 text-sm rounded-md"
+              />
             </div>
+          )}
+          
+          {activeTab === 'invoices' && (
+            <Link href="/dashboard/invoices/new">
+              <Button>
+                <FilePlus className="mr-2 h-4 w-4" />
+                New Invoice
+              </Button>
+            </Link>
           )}
         </div>
 
-        {loadingRecipes ? (
-           <div className="flex justify-center items-center min-h-[200px]"><Spinner size={36} /></div>
-        ) : userRecipes.length === 0 ? (
-          <Card className="text-center p-10 animate-scale-in">
-            <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
-            <p className="text-muted-foreground mb-6">Start your baking journey by adding your first recipe.</p>
-            <Link href="/recipes/new" passHref>
-              <Button size="lg">
-                <PlusCircle className="mr-2 h-5 w-5" /> Add Your First Baking Recipe
-              </Button>
-            </Link>
-          </Card>
-        ) : displayedRecipesCount > 0 ? (
+        <TabsContent value="recipes" className="mt-0">
+          {loadingRecipes ? (
+            <div className="flex justify-center items-center min-h-[200px]"><Spinner size={36} /></div>
+          ) : userRecipes.length === 0 ? (
+            <Card className="text-center p-10 animate-scale-in">
+              <ChefHat size={64} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-2xl font-headline mb-2">No Recipes Yet!</h3>
+              <p className="text-muted-foreground mb-6">Start your baking journey by adding your first recipe.</p>
+              <Link href="/recipes/new" passHref>
+                <Button size="lg">
+                  <PlusCircle className="mr-2 h-5 w-5" /> Add Your First Baking Recipe
+                </Button>
+              </Link>
+            </Card>
+          ) : displayedRecipesCount > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {searchedUserRecipes.map((recipe) => (
+            {filteredUserRecipes.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] group animate-scale-in bg-card flex flex-col">
                 <Link href={`/recipes/${recipe.id}`} className="block flex-grow">
                   <div className="relative aspect-video w-full">
@@ -388,15 +593,79 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-        ) : (
-          <Card className="text-center p-10 animate-scale-in">
-            <Search size={64} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-2xl font-headline mb-2">No Recipes Found</h3>
-            <p className="text-muted-foreground">No recipes match your search term "{userRecipeSearchTerm}".</p>
-             <Button variant="link" onClick={() => setUserRecipeSearchTerm('')} className="mt-2">Clear Search</Button>
-          </Card>
-        )}
-      </div>
+          ) : (
+            <Card className="text-center p-10 animate-scale-in">
+              <Search size={64} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-2xl font-headline mb-2">No Recipes Found</h3>
+              <p className="text-muted-foreground">No recipes match your search term "{userRecipeSearchTerm}".</p>
+              <Button variant="link" onClick={() => setUserRecipeSearchTerm('')} className="mt-2">Clear Search</Button>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="invoices" className="mt-0">
+          {loadingInvoices ? (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <Spinner size={36} />
+            </div>
+          ) : invoices.length === 0 ? (
+            <Card className="text-center p-10 animate-scale-in">
+              <Receipt size={64} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-2xl font-headline mb-2">No Invoices Yet!</h3>
+              <p className="text-muted-foreground mb-6">Create your first invoice to get started.</p>
+              <Link href="/dashboard/invoices/new" passHref>
+                <Button size="lg">
+                  <FilePlus className="mr-2 h-5 w-5" /> Create Your First Invoice
+                </Button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {invoices.map((invoice) => (
+                <Card key={invoice.id} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{invoice.invoiceNumber || 'Draft'}</h3>
+                        <Badge variant={getStatusVariant(invoice.status || 'draft')}>
+                          {invoice.status || 'Draft'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(invoice.invoiceDate)}
+                      </p>
+                      {invoice.clientName && (
+                        <p className="text-sm">
+                          {invoice.clientName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        {formatCurrency(Number(invoice.grandTotal) || 0, invoice.currency || 'USD')}
+                      </p>
+                      <div className="flex gap-2 mt-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/dashboard/invoices/${invoice.id}`}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            View
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/api/invoices/${invoice.id}/download`}>
+                            <Download className="h-4 w-4 mr-2" />
+                            PDF
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

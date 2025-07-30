@@ -61,33 +61,31 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
           <span className="bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent group-hover:from-[hsl(var(--blue))] group-hover:to-primary transition-all">Bakebook</span>
         </Link>
 
-        <nav className="flex items-center gap-2">
-          {/* Auth Buttons - Visible on mobile */}
-          <div className="md:hidden flex items-center gap-1">
-            {!isAuthenticated && !authLoading && (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => router.push('/login')} 
-                  className="px-2"
-                >
-                  <LogIn className="mr-1 h-4 w-4" />
-                  <span className="text-sm">Login</span>
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={() => router.push('/signup')} 
-                  className="px-2"
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </div>
+        <nav className="flex items-center gap-1">
+          {/* Auth Buttons - Next to menu */}
+          {!isAuthenticated && !authLoading && (
+            <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => router.push('/login')}
+                className="h-8 px-3 text-sm"
+              >
+                Login
+              </Button>
+              <Button 
+                variant="default"
+                size="sm" 
+                onClick={() => router.push('/signup')}
+                className="h-8 px-3 text-sm"
+              >
+                Register
+              </Button>
+            </div>
+          )}
           
           {/* Navigation - Hamburger Menu */}
-          <div>
+          <div className="flex items-center">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -157,9 +155,9 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
                     </Button>
                   </SheetClose>
                   
-                  {/* Auth Links for non-authenticated users - Hidden on mobile since buttons are now in header */}
+                  {/* Auth Links for non-authenticated users - Mobile menu only */}
                   {!isAuthenticated && (
-                    <div className="hidden md:block">
+                    <div className="md:hidden">
                       <SheetClose asChild>
                         <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/login')}>
                           <LogIn className="mr-2 h-4 w-4" />
@@ -192,28 +190,13 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
             </Sheet>
           </div>
 
-          {/* Desktop Authentication Section */}
-          <div className="hidden md:flex items-center gap-2 ml-2">
-            {authLoading ? (
-              <Spinner size={24} />
-            ) : isAuthenticated && user ? (
-              <div className="flex items-center gap-2">
-                <UserAvatar />
-                <span className="text-sm font-medium">{user.brandName || user.name || user.email || 'User'}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 md:gap-2">
-                <Button variant="ghost" onClick={() => router.push('/login')} className="px-2 sm:px-3">
-                  <LogIn className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="text-sm">Login</span>
-                </Button>
-                <Button onClick={() => router.push('/signup')} size="sm" className="px-2 sm:px-3">
-                  <UserPlus className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="text-sm">Sign Up</span>
-                </Button>
-              </div>
-            )}
-          </div>
+          {/* User Profile/Avatar */}
+          {!authLoading && isAuthenticated && user && (
+            <div className="hidden md:flex items-center gap-2 ml-2">
+              <UserAvatar />
+              <span className="text-sm font-medium">{user.brandName || user.name || user.email || 'User'}</span>
+            </div>
+          )}
 
         </nav>
       </div>
