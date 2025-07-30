@@ -62,6 +62,30 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
         </Link>
 
         <nav className="flex items-center gap-2">
+          {/* Auth Buttons - Visible on mobile */}
+          <div className="md:hidden flex items-center gap-1">
+            {!isAuthenticated && !authLoading && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => router.push('/login')} 
+                  className="px-2"
+                >
+                  <LogIn className="mr-1 h-4 w-4" />
+                  <span className="text-sm">Login</span>
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => router.push('/signup')} 
+                  className="px-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+          
           {/* Navigation - Hamburger Menu */}
           <div>
             <Sheet>
@@ -133,25 +157,22 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
                     </Button>
                   </SheetClose>
                   
-                  {/* Auth Links for non-authenticated users - Mobile only */}
+                  {/* Auth Links for non-authenticated users - Hidden on mobile since buttons are now in header */}
                   {!isAuthenticated && (
-                    <>
-                      <div className="border-t pt-3 mt-2 md:hidden" />
-                      <div className="md:hidden">
-                        <SheetClose asChild>
-                          <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/login')}>
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Login
-                          </Button>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Button className="w-full justify-start text-base" onClick={() => router.push('/signup')}>
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Sign Up
-                          </Button>
-                        </SheetClose>
-                      </div>
-                    </>
+                    <div className="hidden md:block">
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base" onClick={() => router.push('/login')}>
+                          <LogIn className="mr-2 h-4 w-4" />
+                          Login
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button className="w-full justify-start text-base" onClick={() => router.push('/signup')}>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Sign Up
+                        </Button>
+                      </SheetClose>
+                    </div>
                   )}
                   
                   {/* Logout for authenticated users */}

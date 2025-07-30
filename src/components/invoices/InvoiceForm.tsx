@@ -86,12 +86,32 @@ export const invoiceFormSchema = z.object({
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
-const formatDisplayNumber = (num: number | undefined | null) => {
-  if (num === null || num === undefined) return '0.00';
-  return num.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+// Format number with thousand separators and 2 decimal places
+const formatDisplayNumber = (num: number | string | undefined | null, isInput = false): string => {
+  if (num === null || num === undefined || num === '') return isInput ? '' : '0.00';
+  
+  // If it's a string, clean it first
+  const numStr = String(num).replace(/[^0-9.]/g, '');
+  const numberValue = parseFloat(numStr) || 0;
+  
+  // For display in read-only fields
+  if (!isInput) {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true
+    }).format(numberValue);
+  }
+  
+  // For input fields - format with thousand separators but keep decimal input friendly
+  const parts = numberValue.toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+};
+
+// Parse formatted number string back to number
+const parseFormattedNumber = (value: string): number => {
+  return parseFloat(value.replace(/,/g, '')) || 0;
 };
 
 const InvoiceForm = () => {
@@ -100,7 +120,7 @@ const InvoiceForm = () => {
   const { toast } = useToast();
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
-  const { control, register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue, getValues } = useForm<InvoiceFormValues>({
+  const { register, control, handleSubmit, formState: { errors, isSubmitting }, watch, setValue, getValues } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       invoiceNumber: '', // Set initial to empty to avoid hydration mismatch
@@ -148,21 +168,42 @@ const InvoiceForm = () => {
   useEffect(() => {
     let sub = 0;
     watchedLineItems.forEach((item, index) => {
-      const quantity = Number(item.quantity) || 0;
-      const unitPrice = Number(item.unitPrice) || 0;
-      const total = quantity * unitPrice;
-      setValue(`lineItems.${index}.totalPrice`, total, { shouldValidate: true });
-      sub += total;
+      // Convert to numbers and ensure they're valid
+      const quantity = parseFloat(String(item.quantity)) || 0;
+      const unitPrice = parseFloat(String(item.unitPrice)) || 0;
+      
+      // Calculate total with proper precision to avoid floating point errors
+      const total = Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100;
+      
+      // Only update if the value has changed to prevent infinite loops
+      if (getValues(`lineItems.${index}.totalPrice`) !== total) {
+        setValue(`lineItems.${index}.totalPrice`, total, { shouldValidate: true });
+      }
+      
+      sub = parseFloat((sub + total).toFixed(2));
     });
-    setValue("subtotal", sub, { shouldValidate: true });
+    
+    // Update subtotal if changed
+    if (getValues('subtotal') !== sub) {
+      setValue("subtotal", sub, { shouldValidate: true });
+    }
 
-    const tax = sub * (Number(watchedTaxRate || 0) / 100);
-    setValue("taxAmount", tax, { shouldValidate: true });
+    // Calculate tax and grand total with proper precision
+    const taxRate = parseFloat(String(watchedTaxRate || 0));
+    const tax = parseFloat((sub * (taxRate / 100)).toFixed(2));
+    
+    if (getValues('taxAmount') !== tax) {
+      setValue("taxAmount", tax, { shouldValidate: true });
+    }
 
-    const discount = Number(watchedDiscountAmount || 0);
-    setValue("grandTotal", sub + tax - discount, { shouldValidate: true });
+    const discount = parseFloat(String(watchedDiscountAmount || 0)) || 0;
+    const grandTotal = parseFloat(((sub + tax) - discount).toFixed(2));
+    
+    if (getValues('grandTotal') !== grandTotal) {
+      setValue("grandTotal", grandTotal, { shouldValidate: true });
+    }
 
-  }, [watchedLineItems, watchedTaxRate, watchedDiscountAmount, setValue]);
+  }, [watchedLineItems, watchedTaxRate, watchedDiscountAmount, setValue, getValues]);
 
 
   const onSubmit: SubmitHandler<InvoiceFormValues> = async (data) => {
@@ -441,25 +482,115 @@ const InvoiceForm = () => {
                 </div>
                 <div className="col-span-4 md:col-span-2 space-y-1">
                   <Label htmlFor={`lineItems.${index}.quantity`}>Qty</Label>
-                  <Input
-                    id={`lineItems.${index}.quantity`}
-                    type="number"
-                    step="1"
-                    min="1"
-                    placeholder="1"
-                    {...register(`lineItems.${index}.quantity`)}
+                  <Controller
+                    name={`lineItems.${index}.quantity`}
+                    control={control}
+                    render={({ field: { onChange, value, ...field } }) => {
+                      const displayValue = value === 1 || value === 0 ? '' : String(value).replace(/\.?0+$/, '');
+                      
+                      return (
+                        <Input
+                          {...field}
+                          id={`lineItems.${index}.quantity`}
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="1"
+                          value={displayValue}
+                          onChange={(e) => {
+                            // Get the raw input value (remove all non-digit and non-decimal characters)
+                            const rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                            
+                            // Only allow one decimal point
+                            const decimalCount = (rawValue.match(/\./g) || []).length;
+                            if (decimalCount > 1) return;
+                            
+                            // Parse the number, handling empty string case
+                            const numValue = rawValue === '' ? 1 : parseFloat(rawValue) || 0;
+                            
+                            // Only update if the value has actually changed
+                            if (numValue !== value) {
+                              onChange(numValue);
+                              
+                              // Trigger recalculation
+                              const unitPrice = parseFloat(String(watchedLineItems[index]?.unitPrice || 0));
+                              const total = numValue * unitPrice;
+                              setValue(`lineItems.${index}.totalPrice`, total, { 
+                                shouldValidate: true,
+                                shouldDirty: true 
+                              });
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Format the value on blur
+                            if (e.target.value) {
+                              const num = parseFloat(e.target.value) || 1;
+                              onChange(num);
+                            } else {
+                              onChange(1);
+                            }
+                          }}
+                        />
+                      );
+                    }}
                   />
                    {errors.lineItems?.[index]?.quantity && <p className="text-xs text-destructive">{errors.lineItems[index]?.quantity?.message}</p>}
                 </div>
                 <div className="col-span-4 md:col-span-2 space-y-1">
                   <Label htmlFor={`lineItems.${index}.unitPrice`}>Unit Price ({currentCurrencySymbol})</Label>
-                  <Input
-                    id={`lineItems.${index}.unitPrice`}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    {...register(`lineItems.${index}.unitPrice`)}
+                  <Controller
+                    name={`lineItems.${index}.unitPrice`}
+                    control={control}
+                    render={({ field: { onChange, value, ...field } }) => {
+                      // Format the display value with thousand separators
+                      const displayValue = value === 0 || value === '' ? '' : 
+                        new Intl.NumberFormat('en-US', {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                          useGrouping: true
+                        }).format(Number(value));
+                      
+                      return (
+                        <Input
+                          {...field}
+                          id={`lineItems.${index}.unitPrice`}
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          value={displayValue}
+                          onChange={(e) => {
+                            // Get the raw input value (remove all non-digit and non-decimal characters)
+                            const rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                            
+                            // Only allow one decimal point
+                            const decimalCount = (rawValue.match(/\./g) || []).length;
+                            if (decimalCount > 1) return;
+                            
+                            // Parse the number, handling empty string case
+                            const numValue = rawValue === '' ? 0 : parseFloat(rawValue) || 0;
+                            
+                            // Only update if the value has actually changed
+                            if (numValue !== value) {
+                              onChange(numValue);
+                              
+                              // Trigger recalculation
+                              const quantity = parseFloat(String(watchedLineItems[index]?.quantity || 1));
+                              const total = quantity * numValue;
+                              setValue(`lineItems.${index}.totalPrice`, total, { 
+                                shouldValidate: true,
+                                shouldDirty: true 
+                              });
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Format the value on blur
+                            if (e.target.value) {
+                              const num = parseFloat(e.target.value.replace(/,/g, '')) || 0;
+                              onChange(num);
+                            }
+                          }}
+                        />
+                      );
+                    }}
                   />
                   {errors.lineItems?.[index]?.unitPrice && <p className="text-xs text-destructive">{errors.lineItems[index]?.unitPrice?.message}</p>}
                 </div>
