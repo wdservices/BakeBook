@@ -1,17 +1,16 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Users, ChefHat, BarChart3, DollarSign, Shield, RefreshCw, ImageOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getAllRecipesFromFirestore, deleteRecipeFromFirestore, getAllUsersFromFirestore } from '@/lib/firestoreService';
+import type { User, Recipe } from '@/types';
+import { UserRole } from '@/types';
 import DashboardStatsCard from '@/components/admin/DashboardStatsCard';
 import UserManagementTable from '@/components/admin/UserManagementTable';
 import RecipeManagementTable from '@/components/admin/RecipeManagementTable';
-
-import type { User, Recipe } from '@/types';
-import { UserRole } from '@/types';
-import { Users, ChefHat, BarChart3, DollarSign } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
-import { useToast } from '@/hooks/use-toast';
-import { getAllRecipesFromFirestore, deleteRecipeFromFirestore, getAllUsersFromFirestore } from '@/lib/firestoreService';
+import Button from '@/components/ui/button';
 
 function getCurrentMonthYear() {
   const now = new Date();
@@ -132,57 +131,141 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-headline animate-fade-in bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Admin Dashboard</h1>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardStatsCard 
-          title="Total Users" 
-          value={users.length.toString()} 
-          icon={Users}
-          description={`${users.length} registered users`}
-        />
-        <DashboardStatsCard 
-          title="Active Users" 
-          value={users.filter(u => u.role === UserRole.USER).length.toString()} 
-          icon={Users}
-          description="Regular users"
-        />
-        <DashboardStatsCard 
-          title="Admin Users" 
-          value={users.filter(u => u.role === UserRole.ADMIN).length.toString()} 
-          icon={Users}
-          description="Administrators"
-        />
-        <DashboardStatsCard 
-          title="Total Donations" 
-          value={`$${totalDonations.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          icon={DollarSign}
-          description={`From ${donatingUsersCount} users`}
-        />
-        <DashboardStatsCard 
-          title="Engagement" 
-          value={`${Math.round((users.length / 100) * 75)}%`}
-          icon={BarChart3}
-          description="Monthly active users"
-        />
-      </div>
-      
-      <DonorLeaderboard />
-      
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">User Management</h2>
-          <UserManagementTable 
-            users={users} 
-            onRoleChange={handleRoleChange} 
-            isAdmin={true} 
-          />
+    <div className="w-full max-w-full">
+      <div className="flex flex-col space-y-6 w-full">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <div className="flex space-x-2">
+            <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
-        
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Recipe Management</h2>
-          <RecipeManagementTable recipes={recipes} onDeleteRecipe={handleDeleteRecipe} />
+
+        {/* Stats Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 w-full">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-medium mb-1 text-blue-100">Total Users</div>
+            <div className="text-3xl font-bold mb-2">{users.length}</div>
+            <div className="text-sm text-blue-100">{users.length} registered users</div>
+            <Users className="h-8 w-8 mt-2 text-blue-200" />
+          </div>
+
+          <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-medium mb-1 text-green-100">Active Users</div>
+            <div className="text-3xl font-bold mb-2">
+              {users.filter(u => u.role === UserRole.USER).length}
+            </div>
+            <div className="text-sm text-green-100">Regular users</div>
+            <Users className="h-8 w-8 mt-2 text-green-200" />
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-medium mb-1 text-purple-100">Admin Users</div>
+            <div className="text-3xl font-bold mb-2">
+              {users.filter(u => u.role === UserRole.ADMIN).length}
+            </div>
+            <div className="text-sm text-purple-100">Administrators</div>
+            <Shield className="h-8 w-8 mt-2 text-purple-200" />
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-medium mb-1 text-amber-100">Total Donations</div>
+            <div className="text-3xl font-bold mb-2">
+              ₦{totalDonations.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-sm text-amber-100">From {donatingUsersCount} users</div>
+            <DollarSign className="h-8 w-8 mt-2 text-amber-200" />
+          </div>
+
+          <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-medium mb-1 text-rose-100">Engagement</div>
+            <div className="text-3xl font-bold mb-2">
+              {Math.round((users.length / 100) * 75)}%
+            </div>
+            <div className="text-sm text-rose-100">Monthly active users</div>
+            <BarChart3 className="h-8 w-8 mt-2 text-rose-200" />
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+            <h2 className="text-xl font-semibold mb-4">Recent Users</h2>
+            <div className="space-y-4">
+              {users.slice(0, 5).map(user => (
+                <div key={user.id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-300 font-medium">
+                        {user.name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium">{user.name || 'Anonymous User'}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    user.role === UserRole.ADMIN 
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
+                      : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  }`}>
+                    {user.role}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+            <h2 className="text-xl font-semibold mb-4">Recent Recipes</h2>
+            <div className="space-y-4">
+              {recipes.slice(0, 5).map(recipe => (
+                <div key={recipe.id} className="flex items-center space-x-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  <div className="h-16 w-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700">
+                    {recipe.imageUrl ? (
+                      <img
+                        src={recipe.imageUrl}
+                        alt={recipe.title}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-recipe.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-gray-400">
+                        <ImageOff className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{recipe.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {recipe.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-2xl font-bold mb-4">User Management</h2>
+            <UserManagementTable 
+              users={users} 
+              onRoleChange={handleRoleChange} 
+              isAdmin={true} 
+            />
+          </div>
+          
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Recipe Management</h2>
+            <RecipeManagementTable recipes={recipes} onDeleteRecipe={handleDeleteRecipe} />
+          </div>
         </div>
       </div>
     </div>
