@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/admin/dashboard" passHref>
+              <Link href="/admin/users" passHref>
                 <SidebarMenuButton tooltip="Users">
                   <Users /> <span className="group-data-[collapsible=icon]:hidden">Users</span>
                 </SidebarMenuButton>

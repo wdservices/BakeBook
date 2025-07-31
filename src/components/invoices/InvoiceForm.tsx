@@ -120,7 +120,7 @@ const InvoiceForm = () => {
   const { toast } = useToast();
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
-  const { register, control, handleSubmit, formState: { errors, isSubmitting }, watch, setValue, getValues } = useForm<InvoiceFormValues>({
+  const { register, control, handleSubmit, formState: { errors, isSubmitting }, watch, setValue, getValues, trigger } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       invoiceNumber: '', // Set initial to empty to avoid hydration mismatch
@@ -162,48 +162,56 @@ const InvoiceForm = () => {
   const watchedTaxRate = watch("taxRate");
   const watchedDiscountAmount = watch("discountAmount");
   const watchedCurrency = watch("currency");
+  
+  // Watch for changes in unit prices to update totals in real-time
+  const unitPriceWatches = fields.map((_, index) => watch(`lineItems.${index}.unitPrice`));
+  const quantityWatches = fields.map((_, index) => watch(`lineItems.${index}.quantity`));
 
   const currentCurrencySymbol = CURRENCIES[watchedCurrency]?.symbol || '$';
 
+  // Update totals when line items, quantities, or unit prices change
   useEffect(() => {
-    let sub = 0;
-    watchedLineItems.forEach((item, index) => {
-      // Convert to numbers and ensure they're valid
-      const quantity = parseFloat(String(item.quantity)) || 0;
-      const unitPrice = parseFloat(String(item.unitPrice)) || 0;
+    const updateTotals = () => {
+      let sub = 0;
+      watchedLineItems.forEach((item, index) => {
+        // Get the current values directly from the form to ensure we have the latest
+        const currentQuantity = parseFloat(String(item.quantity)) || 0;
+        const currentUnitPrice = parseFloat(String(item.unitPrice)) || 0;
+        
+        // Calculate total with proper precision
+        const total = Math.round((currentQuantity * currentUnitPrice + Number.EPSILON) * 100) / 100;
+        
+        // Update the line item total if changed
+        if (getValues(`lineItems.${index}.totalPrice`) !== total) {
+          setValue(`lineItems.${index}.totalPrice`, total, { shouldValidate: true });
+        }
+        
+        sub = parseFloat((sub + total).toFixed(2));
+      });
       
-      // Calculate total with proper precision to avoid floating point errors
-      const total = Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100;
-      
-      // Only update if the value has changed to prevent infinite loops
-      if (getValues(`lineItems.${index}.totalPrice`) !== total) {
-        setValue(`lineItems.${index}.totalPrice`, total, { shouldValidate: true });
+      // Update subtotal if changed
+      if (getValues('subtotal') !== sub) {
+        setValue("subtotal", sub, { shouldValidate: true });
       }
+
+      // Calculate tax and grand total with proper precision
+      const taxRate = parseFloat(String(watchedTaxRate || 0));
+      const tax = parseFloat((sub * (taxRate / 100)).toFixed(2));
       
-      sub = parseFloat((sub + total).toFixed(2));
-    });
-    
-    // Update subtotal if changed
-    if (getValues('subtotal') !== sub) {
-      setValue("subtotal", sub, { shouldValidate: true });
-    }
+      if (getValues('taxAmount') !== tax) {
+        setValue("taxAmount", tax, { shouldValidate: true });
+      }
 
-    // Calculate tax and grand total with proper precision
-    const taxRate = parseFloat(String(watchedTaxRate || 0));
-    const tax = parseFloat((sub * (taxRate / 100)).toFixed(2));
-    
-    if (getValues('taxAmount') !== tax) {
-      setValue("taxAmount", tax, { shouldValidate: true });
-    }
+      const discount = parseFloat(String(watchedDiscountAmount || 0)) || 0;
+      const grandTotal = parseFloat(((sub + tax) - discount).toFixed(2));
+      
+      if (getValues('grandTotal') !== grandTotal) {
+        setValue("grandTotal", grandTotal, { shouldValidate: true });
+      }
+    };
 
-    const discount = parseFloat(String(watchedDiscountAmount || 0)) || 0;
-    const grandTotal = parseFloat(((sub + tax) - discount).toFixed(2));
-    
-    if (getValues('grandTotal') !== grandTotal) {
-      setValue("grandTotal", grandTotal, { shouldValidate: true });
-    }
-
-  }, [watchedLineItems, watchedTaxRate, watchedDiscountAmount, setValue, getValues]);
+    updateTotals();
+  }, [watchedLineItems, unitPriceWatches, quantityWatches, watchedTaxRate, watchedDiscountAmount, setValue, getValues]);
 
 
   const onSubmit: SubmitHandler<InvoiceFormValues> = async (data) => {
@@ -231,7 +239,7 @@ const InvoiceForm = () => {
             totalPrice: Number(item.totalPrice),
         }))
       };
-      await addInvoiceToFirestore(invoiceToSave, user.id);
+      await addInvoiceToFirestore(invoiceToSave, user?.id || 'guest');
       toast({ title: "Invoice Saved!", description: `Invoice "${data.invoiceNumber}" has been successfully saved.` });
       router.push('/dashboard'); // Or a page listing invoices
     } catch (error: any) {
@@ -341,7 +349,11 @@ const InvoiceForm = () => {
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          // Close the popover after selection
+                          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                        }}
                         initialFocus
                       />
                     </PopoverContent>
@@ -373,7 +385,12 @@ const InvoiceForm = () => {
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          // Close the popover after selection
+                          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                        }}
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -542,7 +559,7 @@ const InvoiceForm = () => {
                     control={control}
                     render={({ field: { onChange, value, ...field } }) => {
                       // Format the display value with thousand separators
-                      const displayValue = value === 0 || value === '' ? '' : 
+                      const displayValue = (value === 0 || value === '' || String(value) === '0') ? '' : 
                         new Intl.NumberFormat('en-US', {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 2,

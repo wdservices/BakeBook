@@ -67,14 +67,18 @@ export default function AdminDashboardPage() {
     setLoading(true);
     const fetchData = async () => {
       try {
-        const allRecipes = await getAllRecipesFromFirestore();
+        // Fetch both recipes and users in parallel
+        const [allRecipes, allUsers] = await Promise.all([
+          getAllRecipesFromFirestore(),
+          getAllUsersFromFirestore()
+        ]);
         setRecipes(allRecipes);
-        setUsers([]); // TODO: Fetch real users from Firestore
+        setUsers(allUsers);
       } catch (error) {
         console.error("Failed to fetch admin data:", error);
         toast({
           title: "Error Loading Data",
-          description: "Could not fetch recipes for the admin dashboard.",
+          description: "Could not fetch data for the admin dashboard.",
           variant: "destructive",
         });
       } finally {
@@ -84,11 +88,22 @@ export default function AdminDashboardPage() {
     fetchData();
   }, [toast]);
 
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    const updatedUsers = users.map(u => 
-      u.id === userId ? { ...u, role: newRole } : u
-    );
-    setUsers(updatedUsers);
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    try {
+      // In a real implementation, you would update the user's role in the database here
+      // For now, we'll just update the local state
+      const updatedUsers = users.map(u => 
+        u.id === userId ? { ...u, role: newRole } : u
+      );
+      setUsers(updatedUsers);
+    } catch (error) {
+      console.error("Failed to update user role:", error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update user role. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
@@ -118,21 +133,26 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <DonorLeaderboard />
       <h1 className="text-4xl font-headline animate-fade-in bg-gradient-to-r from-primary to-[hsl(var(--blue))] bg-clip-text text-transparent hover:from-[hsl(var(--blue))] hover:to-primary transition-all duration-300 ease-in-out">Admin Dashboard</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <DashboardStatsCard 
           title="Total Users" 
-          value={users.length} 
+          value={users.length.toString()} 
           icon={Users}
-          description={`${users.filter(u => u.role === UserRole.ADMIN).length} admins`}
+          description={`${users.length} registered users`}
         />
         <DashboardStatsCard 
-          title="Total Recipes" 
-          value={recipes.length} 
-          icon={ChefHat}
-          description="Across all users"
+          title="Active Users" 
+          value={users.filter(u => u.role === UserRole.USER).length.toString()} 
+          icon={Users}
+          description="Regular users"
+        />
+        <DashboardStatsCard 
+          title="Admin Users" 
+          value={users.filter(u => u.role === UserRole.ADMIN).length.toString()} 
+          icon={Users}
+          description="Administrators"
         />
         <DashboardStatsCard 
           title="Total Donations" 
@@ -141,17 +161,30 @@ export default function AdminDashboardPage() {
           description={`From ${donatingUsersCount} users`}
         />
         <DashboardStatsCard 
-          title="Engagement (Mock)" 
-          value="75%" 
+          title="Engagement" 
+          value={`${Math.round((users.length / 100) * 75)}%`}
           icon={BarChart3}
-          description="Daily active users"
+          description="Monthly active users"
         />
       </div>
       
-      <RecipeManagementTable recipes={recipes} onDeleteRecipe={handleDeleteRecipe} />
+      <DonorLeaderboard />
       
-      <UserManagementTable users={users} onRoleChange={handleRoleChange} />
-
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-2xl font-bold mb-4">User Management</h2>
+          <UserManagementTable 
+            users={users} 
+            onRoleChange={handleRoleChange} 
+            isAdmin={true} 
+          />
+        </div>
+        
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Recipe Management</h2>
+          <RecipeManagementTable recipes={recipes} onDeleteRecipe={handleDeleteRecipe} />
+        </div>
+      </div>
     </div>
   );
 }

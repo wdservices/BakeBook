@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 // New sub-component to safely render client-side specific formats
-const DonationDisplay = ({ user }: { user: User }) => {
+const DonationDisplay = ({ user }: { user: Partial<User> }) => {
   const [displayText, setDisplayText] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,21 +33,21 @@ const DonationDisplay = ({ user }: { user: User }) => {
 };
 
 interface UserManagementTableProps {
-  users: User[];
-  onRoleChange: (userId: string, newRole: UserRole) => void; // Mocked action
+  users: Array<Partial<User> & { id: string }>;
+  onRoleChange: (userId: string, newRole: UserRole) => Promise<void>;
+  isAdmin: boolean;
 }
 
-const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) => {
+const UserManagementTable = ({ users, onRoleChange, isAdmin }: UserManagementTableProps) => {
   const { toast } = useToast();
 
-  const handleRoleToggle = (user: User) => {
-    // In a real app, this would be an API call.
-    // For mock, we just toggle between admin and user.
-    const newRole = user.role === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN;
+  const handleRoleToggle = (user: Partial<User> & { id: string }) => {
+    const currentRole = user.role || UserRole.USER;
+    const newRole = currentRole === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN;
     onRoleChange(user.id, newRole);
     toast({
       title: "Role Updated",
-      description: `${user.name || user.email}'s role changed to ${newRole}.`,
+      description: `${user.name || user.email || 'User'}'s role changed to ${newRole}.`,
     });
   };
 
@@ -76,16 +76,23 @@ const UserManagementTable = ({ users, onRoleChange }: UserManagementTableProps) 
                 <TableCell>
                   <Badge variant={user.role === UserRole.ADMIN ? 'default' : 'secondary'} className="flex items-center gap-1 w-fit">
                     {user.role === UserRole.ADMIN ? <ShieldCheck size={14} /> : <UserCircle size={14} />}
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    {(user.role || UserRole.USER).charAt(0).toUpperCase() + (user.role || UserRole.USER).slice(1).toLowerCase()}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRoleToggle(user)}
+                      className="h-8 w-8 p-0"
+                      disabled={!isAdmin}
+                      title={isAdmin ? "Change role" : "Admin privileges required"}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <DonationDisplay user={user} />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" onClick={() => handleRoleToggle(user)}>
-                    <Edit size={14} className="mr-1" /> Toggle Role
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}

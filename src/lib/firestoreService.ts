@@ -20,6 +20,7 @@ import {
   limit
 } from 'firebase/firestore';
 import type { Recipe, Ingredient, RecipeStep, User, Invoice } from '@/types';
+import { UserRole } from '@/types';
 
 // Helper to convert Firestore timestamp to ISO string or return existing string
 const formatTimestamp = (timestamp: Timestamp | string | undefined): string => {
@@ -258,29 +259,46 @@ export const updateUserProfileFields = async (
 };
 
 export const getAllUsersFromFirestore = async (): Promise<User[]> => {
-  console.log("Fetching all users from Firestore for leaderboard...");
-  const usersCollectionRef = collection(db, 'users');
-  const querySnapshot = await getDocs(usersCollectionRef);
-  if (querySnapshot.empty) {
-    console.log("No users found in Firestore.");
-    return [];
+  try {
+    console.log("Fetching all users from Firestore...");
+    const usersCollectionRef = collection(db, 'users');
+    console.log("Collection reference created");
+    
+    const querySnapshot = await getDocs(usersCollectionRef);
+    console.log("Query snapshot received, size:", querySnapshot.size);
+    
+    if (querySnapshot.empty) {
+      console.log("No users found in Firestore collection 'users'");
+      return [];
+    }
+    
+    console.log(`Found ${querySnapshot.docs.length} user documents`);
+    
+    const users = querySnapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      console.log("User document data:", { id: docSnap.id, ...data });
+      
+      return {
+        id: docSnap.id,
+        email: data.email || null,
+        name: data.name || null,
+        brandName: data.brandName || null,
+        phoneNumber: data.phoneNumber || null,
+        address: data.address || null,
+        role: data.role || UserRole.USER,
+        photoURL: data.photoURL || null,
+        lastDonationAmount: data.lastDonationAmount || null,
+        lastDonationDate: data.lastDonationDate ? formatTimestamp(data.lastDonationDate) : null,
+        lastPromptedDate: data.lastPromptedDate ? formatTimestamp(data.lastPromptedDate) : null,
+      } as User;
+    });
+    
+    console.log("Processed users:", users);
+    return users;
+  } catch (error) {
+    console.error("Error in getAllUsersFromFirestore:", error);
+    throw error;
   }
-  return querySnapshot.docs.map(docSnap => {
-    const data = docSnap.data();
-    return {
-      id: docSnap.id,
-      email: data.email,
-      name: data.name,
-      brandName: data.brandName,
-      phoneNumber: data.phoneNumber,
-      address: data.address,
-      role: data.role,
-      photoURL: data.photoURL,
-      lastDonationAmount: data.lastDonationAmount,
-      lastDonationDate: data.lastDonationDate ? formatTimestamp(data.lastDonationDate) : null,
-      lastPromptedDate: data.lastPromptedDate ? formatTimestamp(data.lastPromptedDate) : null,
-    } as User;
-  });
 };
 
 
