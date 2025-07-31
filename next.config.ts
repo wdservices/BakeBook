@@ -27,6 +27,18 @@ const nextConfig: NextConfig = {
         hostname: 'thescranline.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.shopify.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cookmorphosis.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
