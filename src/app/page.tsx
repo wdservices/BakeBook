@@ -149,6 +149,32 @@ export default function HomePage() {
             BakeBook is the ultimate app for bakers who want to organize, store, and manage their recipes digitally. Say goodbye to messy paper notes and hello to a seamless baking experience. With BakeBook, you can easily store your recipes, track ingredients, generate receipts, and access your favorite recipes anytime, anywhere. Whether you&apos;re a home baker or a professional, BakeBook is designed to make your baking journey easier and more enjoyable.
           </p>
           
+          {/* Download Buttons */}
+          <div className="flex flex-wrap justify-center gap-4 mt-8 animate-fade-in" style={{ animationDelay: '0.7s' }}>
+            <a 
+              href="https://apkpure.com/bakebook/com.bakebook.app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm5 2h2v7h-2V8zm0 8h2v2h-2v-2z"/>
+              </svg>
+              Download from APKPure
+            </a>
+            <a 
+              href="https://play.google.com/store/apps/details?id=com.bakebook.app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.6 3.6v16.8h16.8V3.6H3.6zM12 12.6l-1.2 2.4H8.4l3.6-6.6 1.2 2.4 1.2-2.4 3.6 6.6h-2.4L12 12.6z"/>
+              </svg>
+              Get it on Google Play
+            </a>
+          </div>
+          
           <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
             <Link href="/recipes">
               <Button size="lg" className="text-lg px-8 py-6">
