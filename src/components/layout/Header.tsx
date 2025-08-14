@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Menu, FileText } from 'lucide-react';
+import { ChefHat, LogIn, LogOut, UserPlus, UserCircle, LayoutDashboard, PlusCircle, Menu, FileText, Sparkles, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
@@ -88,10 +88,10 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
           <div className="flex items-center">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
+                <Link href="/recipes" className="flex items-center space-x-2">
+                  <ChefHat className="h-6 w-6" />
+                  <span className="text-lg font-semibold">BakeBook</span>
+                </Link>
               </SheetTrigger>
               <SheetContent side="right" className="w-[240px] sm:w-[300px] p-0">
                 <SheetHeader className="p-4 border-b">
@@ -108,6 +108,27 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
                     <>
                       <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg mb-2">
                         <UserAvatar />
+                        <nav className="hidden md:flex items-center space-x-6">
+                          <Link href="/recipes" className="text-sm font-medium hover:text-primary transition-colors">
+                            Recipes
+                          </Link>
+                          <Link href="/ingredients" className="text-sm font-medium hover:text-primary transition-colors">
+                            My Pantry
+                          </Link>
+                          <Link href="/receipts" className="text-sm font-medium hover:text-primary transition-colors">
+                            Receipts
+                          </Link>
+                          <Link href="/assistant" className="text-sm font-medium hover:text-primary transition-colors flex items-center">
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            AI Assistant
+                          </Link>
+                          {isAuthenticated && (
+                            <Link href="/recipes/new" className="text-sm font-medium hover:text-primary transition-colors flex items-center">
+                              <PlusCircle className="h-4 w-4 mr-1" />
+                              New Recipe
+                            </Link>
+                          )}
+                        </nav>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{user.brandName || user.name || user.email || 'User'}</p>
                           {user.email && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
@@ -147,6 +168,14 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
                   <SheetClose asChild>
                     <Button variant="ghost" asChild className="w-full justify-start text-base">
                       <Link href="/bakers">Bakers</Link>
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button variant="ghost" asChild className="w-full justify-start text-base">
+                      <Link href="/assistant" className="text-amber-600 hover:text-amber-700">
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        AI Assistant
+                      </Link>
                     </Button>
                   </SheetClose>
                   <SheetClose asChild>

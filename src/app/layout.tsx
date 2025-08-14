@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import DonationModal from '@/components/donation/DonationModal';
 import ClientDonationProvider from '@/components/layout/ClientDonationProvider';
+import ChatButtonWrapper from '@/components/assistant/ChatButtonWrapper';
 
 export const metadata: Metadata = {
   title: 'Bakebook - Your Baking Companion',
@@ -48,6 +49,7 @@ export default function RootLayout({
           <ClientDonationProvider>
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
+              <ChatButtonWrapper />
             </main>
             <Footer />
             <Toaster />
