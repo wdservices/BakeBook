@@ -1,0 +1,200 @@
+.chatbotContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: rgba(254, 243, 199, 0.7);
+  border-bottom: 1px solid #FDE68A;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.chefHatIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #B45309;
+  margin-right: 0.75rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.headerText h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #92400E;
+  margin: 0;
+}
+
+.headerText p {
+  font-size: 0.875rem;
+  color: #B45309;
+  margin: 0;
+}
+
+.iconButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  color: #92400E;
+  transition: background-color 0.2s;
+}
+
+.iconButton:hover {
+  background-color: #FDE68A;
+}
+
+.chatContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: #FFFBEB;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 0; /* Allow container to shrink */
+  min-height: 0; /* Fix for Firefox */
+  scroll-behavior: smooth;
+}
+
+.messageContainer {
+  display: flex;
+  margin-bottom: 1rem;
+}
+
+.messageContainer.user {
+  justify-content: flex-end;
+}
+
+.messageBubble {
+  max-width: 20rem;
+  padding: 1rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease-in-out;
+}
+
+.messageBubble.user {
+  background-color: #F59E0B;
+  color: white;
+  border-bottom-right-radius: 0;
+}
+
+.messageBubble.bot {
+  background-color: white;
+  color: #1F2937;
+  border-bottom-left-radius: 0;
+}
+
+.inputContainer {
+  padding: 1rem;
+  background-color: white;
+  border-top: 1px solid #E5E7EB;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.inputForm {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inputField {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid #D1D5DB;
+  font-size: 1rem;
+  transition: box-shadow 0.2s;
+  background-color: white;
+  color: #1F2937;
+}
+
+.inputField:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #F59E0B;
+}
+
+.sendButton {
+  padding: 0.75rem;
+  background-color: #F59E0B;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sendButton:hover {
+  background-color: #D97706;
+}
+
+.sendIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.dotPulse {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #6d6d6d;
+  color: #6d6d6d;
+  animation: dotPulse 1.5s cubic-bezier(0.6, 0.2, 0.4, 1) infinite;
+}
+
+.dotPulse::before,
+.dotPulse::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #6d6d6d;
+  color: #6d6d6d;
+}
+
+.dotPulse::before {
+  left: -15px;
+  animation: dotPulse 1.5s cubic-bezier(0.6, 0.2, 0.4, 1) -0.2s infinite;
+}
+
+.dotPulse::after {
+  left: 15px;
+  animation: dotPulse 1.5s cubic-bezier(0.6, 0.2, 0.4, 1) -0.4s infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(0); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
