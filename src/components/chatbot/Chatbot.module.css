@@ -112,6 +112,19 @@
   z-index: 10;
 }
 
+.disclaimer {
+  font-size: 0.65rem;
+  color: #6B7280;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background-color: #FEF3C7;
+  border-top: 1px solid #FDE68A;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  line-height: 1.2;
+}
+
 .inputForm {
   display: flex;
   align-items: center;

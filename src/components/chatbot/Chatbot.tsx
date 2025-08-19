@@ -14,6 +14,10 @@ export default function Chatbot() {
     {
       text: "Hey there, baker! I'm Bella, your friendly baking assistant. How can I help you whip up something wonderful today?",
       sender: 'bot'
+    },
+    {
+      text: "ℹ️ Please note: The information and advice provided by this chatbot are for general informational purposes only and should not be considered as professional baking, nutritional, or health advice. Always consult with a qualified professional for specific guidance. BakeBook is not liable for any outcomes resulting from the use of this information.",
+      sender: 'bot'
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
@@ -168,6 +172,9 @@ export default function Chatbot() {
       </div>
 
       {/* Input */}
+      <div className={styles.disclaimer}>
+        By using this chat, you agree that advice is for informational purposes only. Not professional advice.
+      </div>
       <footer className={styles.inputContainer}>
         <form onSubmit={handleSubmit} className={styles.inputForm}>
           <input
