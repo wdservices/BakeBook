@@ -88,10 +88,10 @@ const Header = ({ onOpenDonationModal }: HeaderProps) => {
           <div className="flex items-center">
             <Sheet>
               <SheetTrigger asChild>
-                <Link href="/recipes" className="flex items-center space-x-2">
-                  <ChefHat className="h-6 w-6" />
-                  <span className="text-lg font-semibold">BakeBook</span>
-                </Link>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[240px] sm:w-[300px] p-0">
                 <SheetHeader className="p-4 border-b">
